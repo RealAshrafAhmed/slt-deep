@@ -1,0 +1,67 @@
+# .gitignore for uv monorepo
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+dist/
+build/
+
+# Jupyter
+.ipynb_checkpoints/
+*.nbconvert.ipynb
+
+# Research artifacts
+*.pkl
+*.pickle
+*.pt
+*.pth
+*.h5
+*.hdf5
+*.npz
+*.joblib
+
+# Experiment tracking
+wandb/
+mlruns/
+.neptune/
+outputs/
+
+# Logs and outputs
+*.log
+*.out
+*.err
+slurm-*.out
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDEs
+.idea/
+*.sublime-*
+
+# VSCode (but keep settings.json and extensions.json)
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# Environment
+.env
+.envrc
