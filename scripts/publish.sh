@@ -17,11 +17,11 @@ print_usage() {
     echo "  notebook <notebook>     Convert notebook to PDF via LaTeX"
     echo ""
     echo "Examples:"
-    echo "  $0 compile slt-quasi-singular/paper/slt-quasi-singular"
-    echo "  $0 compile slt-quasi-singular  # compiles all .tex files in project"
-    echo "  $0 quarto slt-quasi-singular/paper/notebook_to_paper"
-    echo "  $0 notebook projects/slt-quasi-singular/notebooks/fit_dataset.ipynb"
-    echo "  $0 clean slt-quasi-singular"
+    echo "  $0 compile slt/quasi-singular-models/paper/slt-quasi-singular"
+    echo "  $0 compile slt/quasi-singular-models  # compiles all .tex files in project"
+    echo "  $0 quarto slt/quasi-singular-models/paper/notebook_to_paper"
+    echo "  $0 notebook projects/slt/quasi-singular-models/notebooks/fit_dataset.ipynb"
+    echo "  $0 clean slt/quasi-singular-models"
 }
 
 compile_latex() {

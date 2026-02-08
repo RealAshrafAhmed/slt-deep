@@ -39,12 +39,12 @@ publishing = [
 [tool.uv.workspace]
 members = [
     "packages/*",
-    "projects/*"
+    "projects/*/packages/*"
 ]
 
 [tool.uv.sources]
 scipy_extensions = { workspace = true }
-slt-quasi-singular = { workspace = true }
+kl = { workspace = true }
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]  # unused imports ok in __init__
