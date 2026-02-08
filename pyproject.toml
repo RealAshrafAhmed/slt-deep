@@ -1,0 +1,70 @@
+[project]
+name="python-research-monorepo-template"
+version = "0.1.0"
+description = "A production-ready template for managing multiple research projects and shared libraries in a single repository using modern Python tooling"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pathlib2>=2.3",
+    "typer>=0.16",
+    "tqdm>=4.67.1",
+    "seaborn>=0.13.2",
+    "graphviz>=0.21",
+    "nutpie>=0.16.4",
+    "numba>=0.63.1",
+    "papermill>=2.6.0",
+    "scipy_extensions"
+]
+[project.optional-dependencies]
+dev = [
+    "nbqa",
+    "black",
+    "ruff",
+    "pre-commit>=4.5.1",
+    "pytest>=9.0.2",
+    "jupyterlab>=4.5.3",
+    "ipykernel>=7.2.0",
+    "ipywidgets>=8.1.8",
+    "runcell>=0.1.17",
+    "pymc>=5.27.1"
+]
+
+[tool.uv.workspace]
+members = [
+    "packages/*",
+    "projects/*"
+]
+
+[tool.uv.sources]
+scipy_extensions = { workspace = true }
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # unused imports ok in __init__
+"notebooks/**" = ["E402", "F401", "F403"]  # notebooks have different import patterns
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pytest.ini_options]
+testpaths = ["packages", "projects"]
+python_files = ["test_*.py", "*_test.py"]
+select = [
+    "E",
+    "W",
+    "F",
+    "I",
+    "N",
+    "UP",
+    "B",
+    "C4",
+    "SIM",
+    "NPY",
+    "PD",
+    "RUF",
+]
+ignore = [
+    "E501",
+    "B008",
+    "B905",
+]
