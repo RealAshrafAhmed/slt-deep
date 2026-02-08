@@ -45,7 +45,7 @@ uv run pytest
 ./scripts/publish.sh compile example_paper
 
 # Convert notebooks to PDF
-./scripts/publish.sh notebook projects/slt-quasi-singular/fit_dataset.ipynb
+./scripts/publish.sh notebook projects/slt/quasi-singular-models/notebooks/fit_dataset.ipynb
 
 # Set up pre-commit hooks (after installing dev dependencies)
 uv run pre-commit install
@@ -211,7 +211,7 @@ rm -rf build/ dist/ *.egg-info/ .pytest_cache/
 ./scripts/publish.sh quarto slt-quasi-singular/notebook_to_paper
 
 # Direct notebook → PDF conversion
-./scripts/publish.sh notebook projects/slt-quasi-singular/fit_dataset.ipynb
+./scripts/publish.sh notebook projects/slt/quasi-singular-models/notebooks/fit_dataset.ipynb
 
 # Watch and auto-compile LaTeX
 ./scripts/publish.sh watch slt-quasi-singular/example_paper
@@ -233,7 +233,7 @@ The template includes example content you should remove or replace:
 rm -rf packages/pymc_extensions
 
 # Remove example project (if starting fresh)
-rm -rf projects/slt-quasi-singular
+rm -rf projects/slt
 
 # Remove example notebook
 rm notebooks/example_usage.ipynb
@@ -268,10 +268,20 @@ uv sync --extra dev
    # Add your code in src/myutils/
    ```
 
-4. **Create your first project**:
+4. **Create your first research area and projects**:
    ```bash
-   uv init projects/experiment1 --package
-   # Add notebooks, scripts, and project-specific code
+   # Create a research area directory
+   mkdir -p projects/slt
+
+   # Create shared libraries for this research area
+   uv init projects/slt/packages/kl --lib
+
+   # Create individual experiments (simple directories, not packages)
+   mkdir -p projects/slt/quasi-singular-models/{notebooks,data,paper}
+   mkdir -p projects/slt/inverse-temperature/{notebooks,data,paper}
+
+   # Experiments import from libraries, never from each other
+   # If you need to share code between experiments, create a new library
    ```
 
 5. **Adjust linting rules** in `pyproject.toml` if you find them too strict:
@@ -287,13 +297,20 @@ uv sync --extra dev
 
 ```
 1. Start with exploratory analysis in notebooks/
-2. Extract useful functions into packages/ as they stabilize
-3. Create a dedicated projects/ directory when starting formal experiments
-4. Use packages/ code across multiple projects
-5. Write tests for critical functionality
-6. Write papers in projects/*/  alongside your analysis and data
-7. Use papermill to parameterize and batch-run notebooks
-8. Convert notebooks to PDFs or create LaTeX papers for publication
+2. Extract useful functions into packages/ as they stabilize (global libraries)
+3. Create a research area: projects/slt/
+4. Create domain-specific libraries in projects/slt/packages/kl/
+5. Create individual experiments as simple directories:
+   mkdir -p projects/slt/quasi-singular-models/{notebooks,data,paper}
+6. Use clean imports in notebooks/experiments:
+   - Global: from scipy_extensions import ...
+   - Domain: from kl import ...
+   - Never: from other_experiment import ... (extract to library instead!)
+7. When experiments need to share code: extract it to a library first
+8. Write tests for libraries (not experiments)
+9. Write papers in projects/slt/quasi-singular-models/paper/ alongside analysis
+10. Use papermill to parameterize and batch-run notebooks
+11. Convert notebooks to PDFs or create LaTeX papers for publication
 ```
 
 ### Troubleshooting
@@ -390,8 +407,28 @@ uv sync --extra dev
 
 ### Why packages/ vs projects/?
 
-- **packages/**: Reusable libraries (utils, plotting, data loaders) - should have tests
-- **projects/**: Specific experiments/papers - can be messier, more exploratory, includes LaTeX documents alongside analysis
+This template supports **two-tier code sharing** with clean architectural boundaries:
+
+- **`packages/`**: **Global libraries** - Reusable libraries used across ALL research areas (scipy extensions, plotting utilities, data loaders). Should have tests.
+- **`projects/research-area/packages/`**: **Domain-specific libraries** - Shared code within a research area (e.g., `projects/slt/packages/kl/` used by all SLT experiments).
+- **`projects/research-area/experiment/`**: **Individual experiments** - Simple directories containing notebooks, data, and papers. Import from libraries but never from each other.
+
+**Example structure:**
+```
+packages/scipy_extensions/           # Global library - everyone uses
+projects/
+  slt/                               # Singular Learning Theory research
+    packages/kl/                     # Domain library - only SLT experiments use
+    quasi-singular-models/           # Experiment directory
+      notebooks/, data/, paper/      # Just research artifacts
+    inverse-temperature/             # Experiment directory
+      notebooks/, data/, paper/      # Just research artifacts
+  deep-learning/
+    packages/neural-nets/            # Domain library
+    transformer-analysis/            # Experiment directory
+```
+
+**Key principle:** Experiments never import from each other. All shared code must be extracted to libraries first. This prevents tight coupling and forces good abstractions.
 
 ### Dependency Philosophy
 
