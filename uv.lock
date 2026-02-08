@@ -12,8 +12,8 @@ resolution-markers = [
 
 [manifest]
 members = [
+    "python-research-monorepo-template",
     "scipy-extensions",
-    "skeletons-monorepo-for-research",
     "slt-quasi-singular",
 ]
 
@@ -1300,6 +1300,23 @@ wheels = [
 ]
 
 [[package]]
+name = "jupyter"
+version = "1.1.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "ipykernel" },
+    { name = "ipywidgets" },
+    { name = "jupyter-console" },
+    { name = "jupyterlab" },
+    { name = "nbconvert" },
+    { name = "notebook" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/58/f3/af28ea964ab8bc1e472dba2e82627d36d470c51f5cd38c37502eeffaa25e/jupyter-1.1.1.tar.gz", hash = "sha256:d55467bceabdea49d7e3624af7e33d59c37fff53ed3a350e1ac957bed731de7a", size = 5714959, upload-time = "2024-08-30T07:15:48.299Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/38/64/285f20a31679bf547b75602702f7800e74dbabae36ef324f716c02804753/jupyter-1.1.1-py2.py3-none-any.whl", hash = "sha256:7a59533c22af65439b24bbe60373a4e95af8f16ac65a6c00820ad378e3f7cc83", size = 2657, upload-time = "2024-08-30T07:15:47.045Z" },
+]
+
+[[package]]
 name = "jupyter-client"
 version = "8.8.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1322,6 +1339,25 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/fd/97/5a2b52d00c2e719722aa389dcb242f553943e9199a5a59edc9d271a291aa/jupyter_collaboration_ui-2.2.1.tar.gz", hash = "sha256:2a9a8e990cf5d2ba78fa99334568691c46815eb729e17339256cc7a65262a196", size = 74555, upload-time = "2026-02-05T15:31:14.029Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/70/47/449b615ca562ce675dcc73cd6c3b4727bd892295db6a20a4d8148c786865/jupyter_collaboration_ui-2.2.1-py3-none-any.whl", hash = "sha256:37d98b8974cdccd862df9ca9b1e3856b8cd447c7c2ff91803b785a8050c33f15", size = 46072, upload-time = "2026-02-05T15:31:12.227Z" },
+]
+
+[[package]]
+name = "jupyter-console"
+version = "6.6.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "ipykernel" },
+    { name = "ipython" },
+    { name = "jupyter-client" },
+    { name = "jupyter-core" },
+    { name = "prompt-toolkit" },
+    { name = "pygments" },
+    { name = "pyzmq" },
+    { name = "traitlets" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/bd/2d/e2fd31e2fc41c14e2bcb6c976ab732597e907523f6b2420305f9fc7fdbdb/jupyter_console-6.6.3.tar.gz", hash = "sha256:566a4bf31c87adbfadf22cdf846e3069b59a71ed5da71d6ba4d8aaad14a53539", size = 34363, upload-time = "2023-03-06T14:13:31.02Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ca/77/71d78d58f15c22db16328a476426f7ac4a60d3a5a7ba3b9627ee2f7903d4/jupyter_console-6.6.3-py3-none-any.whl", hash = "sha256:309d33409fcc92ffdad25f0bcdf9a4a9daa61b6f341177570fdac03de5352485", size = 24510, upload-time = "2023-03-06T14:13:28.229Z" },
 ]
 
 [[package]]
@@ -1483,6 +1519,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/90/51/9187be60d989df97f5f0aba133fa54e7300f17616e065d1ada7d7646b6d6/jupyterlab_pygments-0.3.0.tar.gz", hash = "sha256:721aca4d9029252b11cfa9d185e5b5af4d54772bb8072f9b7036f4170054d35d", size = 512900, upload-time = "2023-11-23T09:26:37.44Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b1/dd/ead9d8ea85bf202d90cc513b533f9c363121c7792674f78e0d8a854b63b4/jupyterlab_pygments-0.3.0-py3-none-any.whl", hash = "sha256:841a89020971da1d8693f1a99997aefc5dc424bb1b251fd6322462a1b8842780", size = 15884, upload-time = "2023-11-23T09:26:34.325Z" },
+]
+
+[[package]]
+name = "jupyterlab-quarto"
+version = "0.3.5"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a9/52/aa211744900c92abe527427296454ba3868cf7257aab36a07e50ce50b817/jupyterlab_quarto-0.3.5.tar.gz", hash = "sha256:535f9ea7e1e67ebc0e7d2b14b05126399551881f65a0ecd5d00b8437b66ba974", size = 1066111, upload-time = "2024-06-26T19:31:25.313Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7e/6b/a3c4d85f8f609c78336e76b78733d5cdd0871b79fcce1fa66533849aab0c/jupyterlab_quarto-0.3.5-py3-none-any.whl", hash = "sha256:114165409aaad2e68202374ab3d02b08015ed3898427d81bdb3fe9f995e151b9", size = 909228, upload-time = "2024-06-26T19:31:23.223Z" },
 ]
 
 [[package]]
@@ -2005,6 +2050,22 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/24/bf/d1bda4f6168e0b2e9e5958945e01910052158313224ada5ce1fb2e1113b8/nodeenv-1.10.0.tar.gz", hash = "sha256:996c191ad80897d076bdfba80a41994c2b47c68e224c542b48feba42ba00f8bb", size = 55611, upload-time = "2025-12-20T14:08:54.006Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/88/b2/d0896bdcdc8d28a7fc5717c305f1a861c26e18c05047949fb371034d98bd/nodeenv-1.10.0-py2.py3-none-any.whl", hash = "sha256:5bb13e3eed2923615535339b3c620e76779af4cb4c6a90deccc9e36b274d3827", size = 23438, upload-time = "2025-12-20T14:08:52.782Z" },
+]
+
+[[package]]
+name = "notebook"
+version = "7.5.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "jupyter-server" },
+    { name = "jupyterlab" },
+    { name = "jupyterlab-server" },
+    { name = "notebook-shim" },
+    { name = "tornado" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b8/cb/cc7f4df5cee315dd126a47eb60890690a0438d5e0dd40c32d60ce16de377/notebook-7.5.3.tar.gz", hash = "sha256:393ceb269cf9fdb02a3be607a57d7bd5c2c14604f1818a17dbeb38e04f98cbfa", size = 14073140, upload-time = "2026-01-26T07:28:36.605Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/96/98/9286e7f35e5584ebb79f997f2fb0cb66745c86f6c5fccf15ba32aac5e908/notebook-7.5.3-py3-none-any.whl", hash = "sha256:c997bfa1a2a9eb58c9bbb7e77d50428befb1033dd6f02c482922e96851d67354", size = 14481744, upload-time = "2026-01-26T07:28:31.867Z" },
 ]
 
 [[package]]
@@ -2923,6 +2984,74 @@ wheels = [
 ]
 
 [[package]]
+name = "python-research-monorepo-template"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "graphviz" },
+    { name = "numba" },
+    { name = "nutpie" },
+    { name = "papermill" },
+    { name = "pathlib2" },
+    { name = "scipy-extensions" },
+    { name = "seaborn" },
+    { name = "tqdm" },
+    { name = "typer" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "black" },
+    { name = "ipykernel" },
+    { name = "ipywidgets" },
+    { name = "jupyterlab" },
+    { name = "nbqa" },
+    { name = "pre-commit" },
+    { name = "pymc" },
+    { name = "pytest" },
+    { name = "ruff" },
+    { name = "runcell" },
+]
+
+[package.dev-dependencies]
+publishing = [
+    { name = "jupyterlab-quarto" },
+    { name = "nbconvert" },
+    { name = "quarto-cli" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "black", marker = "extra == 'dev'" },
+    { name = "graphviz", specifier = ">=0.21" },
+    { name = "ipykernel", marker = "extra == 'dev'", specifier = ">=7.2.0" },
+    { name = "ipywidgets", marker = "extra == 'dev'", specifier = ">=8.1.8" },
+    { name = "jupyterlab", marker = "extra == 'dev'", specifier = ">=4.5.3" },
+    { name = "nbqa", marker = "extra == 'dev'" },
+    { name = "numba", specifier = ">=0.63.1" },
+    { name = "nutpie", specifier = ">=0.16.4" },
+    { name = "papermill", specifier = ">=2.6.0" },
+    { name = "pathlib2", specifier = ">=2.3" },
+    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.5.1" },
+    { name = "pymc", marker = "extra == 'dev'", specifier = ">=5.27.1" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.2" },
+    { name = "ruff", marker = "extra == 'dev'" },
+    { name = "runcell", marker = "extra == 'dev'", specifier = ">=0.1.17" },
+    { name = "scipy-extensions", editable = "packages/scipy_extensions" },
+    { name = "seaborn", specifier = ">=0.13.2" },
+    { name = "tqdm", specifier = ">=4.67.1" },
+    { name = "typer", specifier = ">=0.16" },
+]
+provides-extras = ["dev"]
+
+[package.metadata.requires-dev]
+publishing = [
+    { name = "jupyterlab-quarto", specifier = ">=0.3.4" },
+    { name = "nbconvert", specifier = ">=7.17.0" },
+    { name = "quarto-cli" },
+]
+
+[[package]]
 name = "python-socks"
 version = "2.8.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3066,6 +3195,17 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/70/d8/78b1bad170f93fcf5e3536e70e8fadac55030002275c9a29e8f5719185de/pyzmq-27.1.0-cp314-cp314t-win_amd64.whl", hash = "sha256:19c9468ae0437f8074af379e986c5d3d7d7bfe033506af442e8c879732bedbe0", size = 661401, upload-time = "2025-09-08T23:08:59.802Z" },
     { url = "https://files.pythonhosted.org/packages/81/d6/4bfbb40c9a0b42fc53c7cf442f6385db70b40f74a783130c5d0a5aa62228/pyzmq-27.1.0-cp314-cp314t-win_arm64.whl", hash = "sha256:dc5dbf68a7857b59473f7df42650c621d7e8923fb03fa74a526890f4d33cc4d7", size = 575170, upload-time = "2025-09-08T23:09:01.418Z" },
 ]
+
+[[package]]
+name = "quarto-cli"
+version = "1.8.27"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "jupyter" },
+    { name = "nbclient" },
+    { name = "wheel" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/37/1c/91682258d62f14c7456fc5ee2a4ab70b6cdb924c0b5f6fd6a1558a1d1b44/quarto_cli-1.8.27.tar.gz", hash = "sha256:6373a0b378a97402bd856ed933d996b86d1eea3433beda5e443adb623e94a9a4", size = 4615, upload-time = "2026-01-16T09:23:04.515Z" }
 
 [[package]]
 name = "referencing"
@@ -3361,11 +3501,11 @@ wheels = [
 
 [[package]]
 name = "setuptools"
-version = "81.0.0"
+version = "82.0.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/0d/1c/73e719955c59b8e424d015ab450f51c0af856ae46ea2da83eba51cc88de1/setuptools-81.0.0.tar.gz", hash = "sha256:487b53915f52501f0a79ccfd0c02c165ffe06631443a886740b91af4b7a5845a", size = 1198299, upload-time = "2026-02-06T21:10:39.601Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/82/f3/748f4d6f65d1756b9ae577f329c951cda23fb900e4de9f70900ced962085/setuptools-82.0.0.tar.gz", hash = "sha256:22e0a2d69474c6ae4feb01951cb69d515ed23728cf96d05513d36e42b62b37cb", size = 1144893, upload-time = "2026-02-08T15:08:40.206Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e1/e3/c164c88b2e5ce7b24d667b9bd83589cf4f3520d97cad01534cd3c4f55fdb/setuptools-81.0.0-py3-none-any.whl", hash = "sha256:fdd925d5c5d9f62e4b74b30d6dd7828ce236fd6ed998a08d81de62ce5a6310d6", size = 1062021, upload-time = "2026-02-06T21:10:37.175Z" },
+    { url = "https://files.pythonhosted.org/packages/e1/c6/76dc613121b793286a3f91621d7b75a2b493e0390ddca50f11993eadf192/setuptools-82.0.0-py3-none-any.whl", hash = "sha256:70b18734b607bd1da571d097d236cfcfacaf01de45717d59e6e04b96877532e0", size = 1003468, upload-time = "2026-02-08T15:08:38.723Z" },
 ]
 
 [[package]]
@@ -3387,63 +3527,9 @@ wheels = [
 ]
 
 [[package]]
-name = "skeletons-monorepo-for-research"
-version = "0.1.0"
-source = { virtual = "." }
-dependencies = [
-    { name = "graphviz" },
-    { name = "numba" },
-    { name = "nutpie" },
-    { name = "papermill" },
-    { name = "pathlib2" },
-    { name = "scipy-extensions" },
-    { name = "seaborn" },
-    { name = "tqdm" },
-    { name = "typer" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "black" },
-    { name = "ipykernel" },
-    { name = "ipywidgets" },
-    { name = "jupyterlab" },
-    { name = "nbqa" },
-    { name = "pre-commit" },
-    { name = "pymc" },
-    { name = "pytest" },
-    { name = "ruff" },
-    { name = "runcell" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "black", marker = "extra == 'dev'" },
-    { name = "graphviz", specifier = ">=0.21" },
-    { name = "ipykernel", marker = "extra == 'dev'", specifier = ">=7.2.0" },
-    { name = "ipywidgets", marker = "extra == 'dev'", specifier = ">=8.1.8" },
-    { name = "jupyterlab", marker = "extra == 'dev'", specifier = ">=4.5.3" },
-    { name = "nbqa", marker = "extra == 'dev'" },
-    { name = "numba", specifier = ">=0.63.1" },
-    { name = "nutpie", specifier = ">=0.16.4" },
-    { name = "papermill", specifier = ">=2.6.0" },
-    { name = "pathlib2", specifier = ">=2.3" },
-    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.5.1" },
-    { name = "pymc", marker = "extra == 'dev'", specifier = ">=5.27.1" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.2" },
-    { name = "ruff", marker = "extra == 'dev'" },
-    { name = "runcell", marker = "extra == 'dev'", specifier = ">=0.1.17" },
-    { name = "scipy-extensions", editable = "packages/scipy_extensions" },
-    { name = "seaborn", specifier = ">=0.13.2" },
-    { name = "tqdm", specifier = ">=4.67.1" },
-    { name = "typer", specifier = ">=0.16" },
-]
-provides-extras = ["dev"]
-
-[[package]]
 name = "slt-quasi-singular"
 version = "0.0.0"
-source = { virtual = "projects/slt-quasi-singular" }
+source = { editable = "projects/slt-quasi-singular" }
 dependencies = [
     { name = "matplotlib" },
     { name = "numpy" },
@@ -3796,6 +3882,18 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/c2/b6/b9afed2afadddaf5ebb2afa801abf4b0868f42f8539bfe4b071b5266c9fe/websockets-16.0-cp314-cp314t-win32.whl", hash = "sha256:5a4b4cc550cb665dd8a47f868c8d04c8230f857363ad3c9caf7a0c3bf8c61ca6", size = 178085, upload-time = "2026-01-10T09:23:33.816Z" },
     { url = "https://files.pythonhosted.org/packages/9f/3e/28135a24e384493fa804216b79a6a6759a38cc4ff59118787b9fb693df93/websockets-16.0-cp314-cp314t-win_amd64.whl", hash = "sha256:b14dc141ed6d2dde437cddb216004bcac6a1df0935d79656387bd41632ba0bbd", size = 178531, upload-time = "2026-01-10T09:23:35.016Z" },
     { url = "https://files.pythonhosted.org/packages/6f/28/258ebab549c2bf3e64d2b0217b973467394a9cea8c42f70418ca2c5d0d2e/websockets-16.0-py3-none-any.whl", hash = "sha256:1637db62fad1dc833276dded54215f2c7fa46912301a24bd94d45d46a011ceec", size = 171598, upload-time = "2026-01-10T09:23:45.395Z" },
+]
+
+[[package]]
+name = "wheel"
+version = "0.46.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "packaging" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/89/24/a2eb353a6edac9a0303977c4cb048134959dd2a51b48a269dfc9dde00c8a/wheel-0.46.3.tar.gz", hash = "sha256:e3e79874b07d776c40bd6033f8ddf76a7dad46a7b8aa1b2787a83083519a1803", size = 60605, upload-time = "2026-01-22T12:39:49.136Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/87/22/b76d483683216dde3d67cba61fb2444be8d5be289bf628c13fc0fd90e5f9/wheel-0.46.3-py3-none-any.whl", hash = "sha256:4b399d56c9d9338230118d705d9737a2a468ccca63d5e813e2a4fc7815d8bc4d", size = 30557, upload-time = "2026-01-22T12:39:48.099Z" },
 ]
 
 [[package]]

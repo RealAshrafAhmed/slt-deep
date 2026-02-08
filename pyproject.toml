@@ -29,6 +29,13 @@ dev = [
     "pymc>=5.27.1"
 ]
 
+[dependency-groups]
+publishing = [
+    "quarto-cli",
+    "nbconvert>=7.17.0",
+    "jupyterlab-quarto>=0.3.4"
+]
+
 [tool.uv.workspace]
 members = [
     "packages/*",
@@ -37,6 +44,7 @@ members = [
 
 [tool.uv.sources]
 scipy_extensions = { workspace = true }
+slt-quasi-singular = { workspace = true }
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]  # unused imports ok in __init__

@@ -9,6 +9,7 @@
 - 🚫 **End "it works on my machine"** dependency conflicts
 - 🤝 **Share code with collaborators** without publishing to PyPI
 - 📚 **Keep notebooks clean** while building reusable libraries
+- 📝 **Write papers seamlessly** - LaTeX integration with your analysis
 - ⚡ **Fast setup** - from clone to working in under 2 minutes
 
 Transform scattered research code into organized, professional projects that others can actually use.
@@ -40,6 +41,12 @@ uv run pytest
 # Clean workspace (removes 100s of cache files!)
 ./scripts/cleanup.sh
 
+# Compile LaTeX papers
+./scripts/publish.sh compile example_paper
+
+# Convert notebooks to PDF
+./scripts/publish.sh notebook projects/slt-quasi-singular/fit_dataset.ipynb
+
 # Set up pre-commit hooks (after installing dev dependencies)
 uv run pre-commit install
 ```
@@ -60,11 +67,13 @@ uv run pre-commit install
 - **🔄 Reproducibility**: Lockfile ensures everyone uses the same dependency versions. Pre-commit hooks enforce code quality.
 - **⚡ Fast Iteration**: `uv` makes dependency management fast and ergonomic.
 - **🧪 Testing Ready**: Example test structure so you can validate critical code paths.
+- **📄 Publication Ready**: LaTeX integration - compile notebooks to PDFs or write papers that reference your analysis.
 
 **When to use this:**
 - Working on multiple related research projects
 - Building reusable tools for experiments (MCMC utilities, plotting helpers, data loaders)
 - Collaborating with others who need your code
+- Writing papers that reference computational analysis
 - Publishing research with reproducible code
 
 **When NOT to use this:**
@@ -94,7 +103,6 @@ uv run pre-commit install
 ./scripts/lab.sh
 ```
 
-[// Dependency Structure]
 
 ## Dependency Structure
 
@@ -102,6 +110,7 @@ This project uses a structured approach to dependencies:
 
 - **Production dependencies**: Core packages required for running simulations, including `papermill` for programmatic notebook execution.
 - **Dev dependencies**: Development tools including Jupyter Lab, formatters, linters, test runners, and interactive notebook tools.
+- **Publishing dependencies**: LaTeX and document generation tools including Quarto and nbconvert for creating papers.
 
 To install different dependency sets:
 
@@ -112,7 +121,7 @@ uv sync
 # Install main + dev dependencies (development)
 uv sync --extra dev
 
-# Install all dependency groups
+# Install all dependency groups (including publishing tools)
 uv sync --all-groups
 ```
 ## Common Commands
@@ -189,6 +198,30 @@ rm -rf build/ dist/ *.egg-info/ .pytest_cache/
 
 **💡 Pro tip:** Run `./scripts/cleanup.sh` regularly to keep your workspace clean and fast. It can free up significant disk space!
 
+### LaTeX & Publishing
+
+```bash
+# Set up LaTeX environment (one-time setup)
+./scripts/publish.sh setup
+
+# Compile LaTeX documents (organized by project)
+./scripts/publish.sh compile slt-quasi-singular/example_paper
+
+# Convert notebooks to PDF with Quarto
+./scripts/publish.sh quarto slt-quasi-singular/notebook_to_paper
+
+# Direct notebook → PDF conversion
+./scripts/publish.sh notebook projects/slt-quasi-singular/fit_dataset.ipynb
+
+# Watch and auto-compile LaTeX
+./scripts/publish.sh watch slt-quasi-singular/example_paper
+
+# Clean LaTeX build artifacts
+./scripts/publish.sh clean slt-quasi-singular/example_paper
+```
+
+**📄 Paper workflow:** Write LaTeX or Quarto documents directly in `projects/*/` directories alongside your notebooks and data. This keeps all project assets together and makes it easy to reference figures and results.
+
 ## Customizing the Template
 
 ### Remove Example Content
@@ -258,7 +291,9 @@ uv sync --extra dev
 3. Create a dedicated projects/ directory when starting formal experiments
 4. Use packages/ code across multiple projects
 5. Write tests for critical functionality
-6. Use papermill to parameterize and batch-run notebooks
+6. Write papers in projects/*/  alongside your analysis and data
+7. Use papermill to parameterize and batch-run notebooks
+8. Convert notebooks to PDFs or create LaTeX papers for publication
 ```
 
 ### Troubleshooting
@@ -356,7 +391,7 @@ uv sync --extra dev
 ### Why packages/ vs projects/?
 
 - **packages/**: Reusable libraries (utils, plotting, data loaders) - should have tests
-- **projects/**: Specific experiments/papers - can be messier, more exploratory
+- **projects/**: Specific experiments/papers - can be messier, more exploratory, includes LaTeX documents alongside analysis
 
 ### Dependency Philosophy
 
