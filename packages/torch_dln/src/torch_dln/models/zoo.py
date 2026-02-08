@@ -97,7 +97,7 @@ def DeepBottleneckDLN(
 
 
 # For backward compatibility, map BottleneckDLN to DeepBottleneckDLN in zoo
-BottleneckDLN = DeepBottleneckDLN
+BottleneckDLN = DeepBottleneckDLN  # noqa: F811
 
 
 def PolynomialDLN(input_dim: int = 1, degree: int = 3) -> nn.Sequential:
