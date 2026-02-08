@@ -32,6 +32,33 @@ build/
 *.npz
 *.joblib
 
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.lot
+*.lof
+*.idx
+*.ind
+*.ilg
+*.nav
+*.snm
+*.vrb
+*.figlist
+*.makefile
+*.fignore
+
+# Generated papers (keep source, ignore output)
+papers/*.pdf
+papers/figures/
+papers/build/
+
 # Experiment tracking
 wandb/
 mlruns/

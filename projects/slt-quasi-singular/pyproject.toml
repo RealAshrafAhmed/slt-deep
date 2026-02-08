@@ -13,3 +13,16 @@ dependencies = [
     "pandas",
     "scipy_extensions"
 ]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[build-system]
+requires = ["uv_build>=0.9.13,<0.10.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+scipy_extensions = { workspace = true }
