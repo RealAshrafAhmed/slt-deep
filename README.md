@@ -1,18 +1,86 @@
-# Python Research Monorepo Template
-*A production-ready template for managing multiple research projects and shared libraries in a single repository using modern Python tooling.*
+# SLT Deep: Singular Learning Theory Analysis of Deep Learning Models
+*Research repo applying Singular Learning Theory tools to understand deep learning models, starting with deep linear networks.*
 
-## Why You Need This
+> **Note:** This repository is based on the [skeletons-monorepo-for-research](https://github.com/RealAshrafAhmed/skeletons-monorepo-for-research) template and maintains upstream sync for template improvements.
 
-**Tired of research code chaos?** This template solves the problems every researcher faces:
+## Research Focus
 
-- 🔄 **Stop copying utility functions** between notebooks and projects
-- 🚫 **End "it works on my machine"** dependency conflicts
-- 🤝 **Share code with collaborators** without publishing to PyPI
-- 📚 **Keep notebooks clean** while building reusable libraries
-- 📝 **Write papers seamlessly** - LaTeX integration with your analysis
-- ⚡ **Fast setup** - from clone to working in under 2 minutes
+**Deep Linear Networks through SLT Lens:** Starting with concrete posterior sampling analysis:
 
-Transform scattered research code into organized, professional projects that others can actually use.
+- 🎯 **DLN Posterior Sampling** - SGLD, HMC, and hybrid samplers for Bayesian DLN analysis
+- 📊 **Sampler Comparison** - Visualizing and validating different MCMC approaches
+- 🗺️ **MAP Exploration** - Local posterior geometry around maximum a posteriori estimates
+- 📈 **Known Quantities** - Computing observables to validate sampler accuracy
+- 🧮 **Toy Models** - Regular (non-singular) DLN for controlled experiments
+
+## Active Investigation: DLN Posterior Sampling
+
+**Goal:** Implement and compare MCMC samplers on toy Deep Linear Networks, building foundational tools for broader SLT analysis.
+### Iterative Development Plan
+
+**Phase 1: Core Sampling Infrastructure** 📦
+- Create `packages/samplers/` with SGLD, HMC implementations
+- Implement 2-phase sampler (SGD → Langevin)
+- Basic toy DLN model (regular/non-singular)
+
+**Phase 2: Sampler Validation** ✅
+- Compare samplers on known DLN posterior
+- Compute theoretical vs sampled quantities
+- Visualize sample paths and convergence
+
+**Phase 3: MAP Exploration** 🗺️
+- Local posterior visualization around MAP
+- Sampler behavior analysis near modes
+- Effective sample size comparison
+
+**Phase 4: Documentation & Extension** 📝
+- Comprehensive notebooks with theory
+- Performance benchmarks
+- Foundation for LLC computation
+
+### Project Structure
+```
+projects/dln/
+├── packages/
+│   └── samplers/              # Core sampling algorithms
+│       ├── sgld.py           # Stochastic Gradient Langevin Dynamics
+│       ├── hmc.py            # Hamiltonian Monte Carlo
+│       ├── hybrid.py         # 2-phase SGD → Langevin
+│       └── toy_dln.py        # Regular DLN test models
+└── experiments/
+    └── posterior-sampling/    # Sampler comparison study
+        ├── notebooks/
+        │   ├── 01_sampler_comparison.ipynb
+        │   ├── 02_map_exploration.ipynb
+        │   └── 03_validation.ipynb
+        ├── data/             # Generated samples and results
+        └── paper/            # Analysis writeup
+```
+
+## Template Benefits
+
+This repo inherits the clean research architecture:
+
+- 🔄 **Shared SLT utilities** - MCMC samplers, KL divergence tools, LLC computation
+- 🚫 **Reproducible experiments** - Consistent environments across all analysis
+- 🤝 **Collaborative research** - Clean code sharing without PyPI publishing
+- 📚 **Theory + Implementation** - Jupyter notebooks + reusable libraries
+- 📝 **Publication ready** - LaTeX integration for papers
+- ⚡ **Fast iteration** - Modern Python tooling (uv, ruff, pre-commit)
+
+**Next Steps:**
+1. Create DLN sampling infrastructure (`uv init projects/dln/packages/samplers --lib`)
+2. Implement toy regular DLN model for testing
+3. Build SGLD sampler with proper gradient noise scaling
+4. Add HMC with automatic step size tuning
+5. Create hybrid SGD→Langevin 2-phase approach
+6. Validate on analytical posterior (if available) or known moments
+
+**Success Metrics:**
+- Samplers converge to same posterior distribution
+- Computed observables match theoretical values
+- Clear visualization of local posterior geometry
+- Reproducible benchmarking framework
 
 ## Cheatsheet
 
@@ -69,27 +137,29 @@ uv run pre-commit install
 - **🧪 Testing Ready**: Example test structure so you can validate critical code paths.
 - **📄 Publication Ready**: LaTeX integration - compile notebooks to PDFs or write papers that reference your analysis.
 
-**When to use this:**
-- Working on multiple related research projects
-- Building reusable tools for experiments (MCMC utilities, plotting helpers, data loaders)
-- Collaborating with others who need your code
-- Writing papers that reference computational analysis
-- Publishing research with reproducible code
+**Research Topics Covered:**
+- Deep Linear Network analysis with Local Learning Coefficient computation
+- MCMC sampling techniques (HMC, SGLD) for Bayesian deep learning
+- KL divergence profiling and model comparison
+- Phase transition analysis in learning dynamics
+- SLT observable estimation and effective dimension computation
 
-**When NOT to use this:**
-- Single standalone Jupyter notebook analysis
-- Quick exploratory data analysis (use a simple directory instead)
+**Useful for:**
+- SLT researchers studying deep learning models
+- Theoretical machine learning investigations
+- Bayesian analysis of neural networks
+- Understanding learning dynamics through singular learning theory
 
-## How to Use This Template
+## Getting Started with SLT Research
 
-### 1. Initial Setup
+### 1. Setup Environment
 
 ```bash
-# Clone or copy this template
-git clone <this-repo-url> my-research
-cd my-research
+# Clone this research repo
+git clone https://github.com/RealAshrafAhmed/slt-deep.git
+cd slt-deep
 
-# Complete setup (installs all deps + builds workspace packages)
+# Complete setup (installs all deps + builds SLT libraries)
 ./scripts/setup.sh
 
 # OR do it manually:
@@ -222,29 +292,66 @@ rm -rf build/ dist/ *.egg-info/ .pytest_cache/
 
 **📄 Paper workflow:** Write LaTeX or Quarto documents directly in `projects/*/` directories alongside your notebooks and data. This keeps all project assets together and makes it easy to reference figures and results.
 
-## Customizing the Template
+## Setting Up SLT Research Projects
 
-### Remove Example Content
+### Starting Your Investigation
 
-The template includes example content you should remove or replace:
+This repo comes with the Deep Linear Network (DLN) project ready to go:
 
 ```bash
-# Remove example package (if you don't need PyMC extensions)
-rm -rf packages/pymc_extensions
+# The project structure spans multiple deep learning model families
+projects/
+├── dln/                          # Deep Linear Networks (active)
+│   ├── packages/
+│   │   ├── samplers/            # HMC and SGLD implementations
+│   │   └── llc/                 # Local Learning Coefficient computation
+│   └── experiments/
+│       ├── basic-dln/           # Single hidden layer analysis
+│       └── multi-layer/         # Deep network investigation
+├── llms/                         # Large Language Models (planned)
+│   ├── packages/
+│   │   ├── transformers/        # Transformer-specific SLT tools
+│   │   └── scaling/             # Scaling law analysis
+│   └── experiments/
+└── other-models/                 # Additional architectures (planned)
+    ├── packages/
+    └── experiments/
+```
 
-# Remove example project (if starting fresh)
-rm -rf projects/slt
+### Adding New SLT Libraries
 
-# Remove example notebook
-rm notebooks/example_usage.ipynb
+```bash
+# Create domain-specific SLT tools for different model families
+uv init projects/dln/packages/samplers --lib
+uv init projects/dln/packages/llc --lib
 
-# Then sync to update workspace
+# Future: LLM-specific tools
+uv init projects/llms/packages/transformers --lib
+uv init projects/llms/packages/scaling --lib
+
+# Add global SLT utilities shared across all model types
+uv init packages/slt-utils --lib
+
+# Sync workspace after adding packages
 uv sync --extra dev
 ```
 
-### Customize for Your Research
+### Syncing with Template Updates
 
-1. **Update metadata** in root `pyproject.toml`:
+This repo maintains sync with the upstream skeleton template:
+
+```bash
+# Pull latest template improvements
+git fetch upstream
+git merge upstream/main
+
+# Resolve any conflicts (usually in project-specific files)
+# Then update your research-specific content as needed
+```
+
+### Research Project Structure
+
+1. **Update project metadata** in root `pyproject.toml` (already done):
    ```toml
    [project]
    name = "your-research-name"
@@ -407,32 +514,37 @@ uv sync --extra dev
 
 ### Why packages/ vs projects/?
 
-This template supports **two-tier code sharing** with clean architectural boundaries:
+This research repo uses **two-tier code sharing** optimized for SLT investigations:
 
-- **`packages/`**: **Global libraries** - Reusable libraries used across ALL research areas (scipy extensions, plotting utilities, data loaders). Should have tests.
-- **`projects/research-area/packages/`**: **Domain-specific libraries** - Shared code within a research area (e.g., `projects/slt/packages/kl/` used by all SLT experiments).
+- **`packages/`**: **Global SLT tools** - Utilities shared across all research areas (KL divergence, model utilities, plotting). Should have tests.
+- **`projects/research-area/packages/`**: **Domain-specific libraries** - Specialized code for each investigation (e.g., `projects/dln/packages/llc/` for Local Learning Coefficient computation).
 - **`projects/research-area/experiment/`**: **Individual experiments** - Simple directories containing notebooks, data, and papers. Import from libraries but never from each other.
 
-**Example structure:**
+**Current SLT research structure:**
 ```
-packages/scipy_extensions/           # Global library - everyone uses
+packages/
+  scipy_extensions/                  # Global utilities for all projects
 projects/
-  slt/                               # Singular Learning Theory research
-    packages/kl/                     # Domain library - only SLT experiments use
-    quasi-singular-models/           # Experiment directory
-      notebooks/, data/, paper/      # Just research artifacts
-    inverse-temperature/             # Experiment directory
-      notebooks/, data/, paper/      # Just research artifacts
-  deep-learning/
-    packages/neural-nets/            # Domain library
-    transformer-analysis/            # Experiment directory
-```
-
-**Key principle:** Experiments never import from each other. All shared code must be extracted to libraries first. This prevents tight coupling and forces good abstractions.
-
-### Dependency Philosophy
-
-- **Main dependencies**: Only packages needed for production/simulation runs (notably `papermill` for programmatic notebook execution)
+  dln/                               # Deep Linear Network investigations (active)
+    packages/
+      samplers/                      # HMC and SGLD implementations
+      llc/                          # Local Learning Coefficient computation
+    experiments/
+      basic-dln/                     # Single layer analysis
+        notebooks/, data/, paper/    # Research artifacts only
+      multi-layer/                   # Deep network analysis
+        notebooks/, data/, paper/    # Research artifacts only
+  llms/                              # Large Language Model investigations (planned)
+    packages/
+      transformers/                  # Transformer-specific SLT tools
+      scaling/                      # Scaling law analysis
+    experiments/
+      gpt-analysis/                  # GPT family SLT investigation
+        notebooks/, data/, paper/
+  other-models/                      # Additional deep learning models (planned)
+    packages/
+      cnns/                         # CNN-specific SLT analysis
+    experiments/
 - **Dev dependencies**: All interactive and development tools (Jupyter Lab, formatters, linters, etc.)
 - **Clean separation**: Keeps production environments lean while full dev environment has everything needed
 
