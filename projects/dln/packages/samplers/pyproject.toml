@@ -1,0 +1,23 @@
+[project]
+name = "samplers"
+version = "0.1.0"
+description = "MCMC samplers for Deep Linear Network posterior sampling (SGLD, HMC, hybrid methods)"
+readme = "README.md"
+authors = [
+    { name = "Ashraf Ahmed", email = "ashrafahmed@sophi.io" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "jax>=0.4.0",
+    "jaxlib>=0.4.0",
+    "blackjax>=1.0.0",
+    "torch>=2.0.0",
+    "numpy>=1.24.0",
+    "scipy>=1.10.0",
+    "matplotlib>=3.7.0",
+    "tqdm>=4.65.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.9.13,<0.10.0"]
+build-backend = "uv_build"

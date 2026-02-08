@@ -1,7 +1,7 @@
 [project]
-name="python-research-monorepo-template"
+name="slt-deep"
 version = "0.1.0"
-description = "A production-ready template for managing multiple research projects and shared libraries in a single repository using modern Python tooling"
+description = "Singular Learning Theory analysis of deep learning models: Local Learning Coefficient computation, MCMC sampling, and KL profiling for deep linear networks and beyond"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -10,10 +10,18 @@ dependencies = [
     "tqdm>=4.67.1",
     "seaborn>=0.13.2",
     "graphviz>=0.21",
-    "nutpie>=0.16.4",
-    "numba>=0.63.1",
+    "nutpie>=0.16.4",  # HMC sampling for SLT
+    "numba>=0.63.1",   # Fast numerical computation
     "papermill>=2.6.0",
-    "scipy_extensions"
+    "torch>=2.0.0",    # Deep learning models
+    "jax>=0.4.0",      # JAX for automatic differentiation
+    "jaxlib>=0.4.0",   # JAX linear algebra backend
+    "blackjax>=1.0.0", # MCMC sampling (HMC, SGLD)
+    "arviz>=0.17.0",   # Bayesian analysis and diagnostics
+    "scipy_extensions",
+    "torch-random",
+    "torch-bdn",
+    "torch-dln",
 ]
 [project.optional-dependencies]
 dev = [
@@ -45,6 +53,9 @@ members = [
 [tool.uv.sources]
 scipy_extensions = { workspace = true }
 kl = { workspace = true }
+torch-random = { workspace = true, editable = true }
+torch-bdn = { workspace = true, editable = true }
+torch-dln = { workspace = true, editable = true }
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]  # unused imports ok in __init__

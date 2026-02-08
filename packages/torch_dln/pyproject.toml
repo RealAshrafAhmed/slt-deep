@@ -1,0 +1,16 @@
+[project]
+name = "torch-dln"
+version = "0.1.0"
+description = "Deep Linear Network model construction helpers for PyTorch"
+readme = "README.md"
+authors = [
+    { name = "Ashraf Ahmed", email = "ashrafahmed@sophi.io" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "torch>=2.0.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.9.13,<0.10.0"]
+build-backend = "uv_build"

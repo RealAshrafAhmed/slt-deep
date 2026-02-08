@@ -1,0 +1,18 @@
+[project]
+name = "torch-bdn"
+version = "0.1.0"
+description = "Bayesian Deep Networks for PyTorch with pluggable MCMC sampling backends"
+readme = "README.md"
+authors = [
+    { name = "Ashraf Ahmed", email = "ashrafahmed@sophi.io" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "torch>=2.0.0",
+    "numpy>=1.24.0",
+    "tqdm>=4.65.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.9.13,<0.10.0"]
+build-backend = "uv_build"
