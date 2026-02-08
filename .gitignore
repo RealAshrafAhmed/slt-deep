@@ -61,6 +61,8 @@ Thumbs.db
 !.vscode/extensions.json
 !.vscode/launch.json
 !.vscode/tasks.json
+.vscode/settings.json
+skeletons-monorepo-for-research.code-workspace
 
 # Environment
 .env

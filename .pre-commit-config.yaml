@@ -1,0 +1,28 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      # Run the formatter
+      - id: ruff-format
+      # Run the linter
+      - id: ruff
+        args: [--fix]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+        args: [--maxkb=5000]
+      - id: check-merge-conflict
+
+  # Note: nbqa-ruff disabled due to overly strict import checking in notebooks
+  # You can still manually lint notebooks with: uv run nbqa ruff notebooks/
+  # - repo: https://github.com/nbQA-dev/nbQA
+  #   rev: 1.8.7
+  #   hooks:
+  #     - id: nbqa-ruff
+  #       args: [--fix]

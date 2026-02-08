@@ -1,0 +1,15 @@
+[project]
+name = "slt-quasi-singular"
+version = "0.0.0"
+description = "Small project for experimenting with quasi-singular SLT mixtures and examples"
+readme = "README.md"
+authors = [ { name = "Ashraf Ahmed" } ]
+requires-python = ">=3.10"
+
+dependencies = [
+    "numpy",
+    "scipy",
+    "matplotlib",
+    "pandas",
+    "scipy_extensions"
+]
