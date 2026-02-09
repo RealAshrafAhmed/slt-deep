@@ -1,5 +1,6 @@
 """Sampling backends for torch_bdn."""
 
-from .torch_backend import torch_hmc, torch_sgld
+from .hmc import hmc
+from .sgld import sgld
 
-__all__ = ["torch_sgld", "torch_hmc"]
+__all__ = ["hmc", "sgld"]

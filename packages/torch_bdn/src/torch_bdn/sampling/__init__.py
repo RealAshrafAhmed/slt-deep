@@ -6,15 +6,15 @@ Allows users to register custom sampling backends or use built-in ones.
 """
 
 import importlib
-from typing import Any, Dict, Protocol, Type
+from typing import Any, Protocol
+
+from .sampler import Sampler
 
 
 class SamplingBackend(Protocol):
     """Protocol that all sampling backends must implement."""
 
-    def sample(
-        self, logp_fn: callable, init_params: Any, n_samples: int, **kwargs
-    ) -> Any:
+    def sample(self, logp_fn, init_params: Any, n_samples: int, **kwargs) -> Any:
         """
         Sample from posterior using this backend.
 
@@ -31,9 +31,9 @@ class SamplingBackend(Protocol):
 
 
 # Global registry of available backends
-_BACKENDS: Dict[str, str] = {
-    "sgld": "torch_bdn.sampling.backends.torch_backend.torch_sgld",
-    "hmc": "torch_bdn.sampling.backends.torch_backend.torch_hmc",
+_BACKENDS: dict[str, str] = {
+    "sgld": "torch_bdn.sampling.backends.sgld.sgld",
+    "hmc": "torch_bdn.sampling.backends.hmc.hmc",
 }
 
 # Create a registry that directly maps to functions (like the BayesianNet expects)
@@ -42,12 +42,13 @@ DEFAULT_BACKEND_REGISTRY = {}
 
 def _initialize_default_registry():
     """Initialize the default registry with function references."""
-    from .backends.torch_backend import torch_hmc, torch_sgld
+    from .backends.hmc import hmc
+    from .backends.sgld import sgld
 
     DEFAULT_BACKEND_REGISTRY.update(
         {
-            "sgld": torch_sgld,
-            "hmc": torch_hmc,
+            "sgld": sgld,
+            "hmc": hmc,
         }
     )
 
@@ -70,7 +71,7 @@ def register_backend(name: str, backend_class_path: str) -> None:
     _BACKENDS[name] = backend_class_path
 
 
-def get_backend(name: str) -> Type[SamplingBackend]:
+def get_backend(name: str) -> type[SamplingBackend]:
     """
     Get a sampling backend by name.
 
@@ -96,9 +97,21 @@ def get_backend(name: str) -> Type[SamplingBackend]:
         backend_class = getattr(module, class_name)
         return backend_class
     except (ImportError, AttributeError) as e:
-        raise ImportError(f"Could not import backend '{name}' from '{class_path}': {e}")
+        raise ImportError(
+            f"Could not import backend '{name}' from '{class_path}'"
+        ) from e
 
 
-def list_backends() -> Dict[str, str]:
+def list_backends() -> dict[str, str]:
     """List all registered backends."""
     return _BACKENDS.copy()
+
+
+__all__ = [
+    "DEFAULT_BACKEND_REGISTRY",
+    "Sampler",
+    "SamplingBackend",
+    "get_backend",
+    "list_backends",
+    "register_backend",
+]

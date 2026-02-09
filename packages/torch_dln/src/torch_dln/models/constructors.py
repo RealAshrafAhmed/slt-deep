@@ -105,20 +105,29 @@ class DeepLinearNetwork(nn.Module):
         """Reset all parameters using specified initialization method."""
         method = init_method or self.init_method
 
-        layer: nn.Linear
         for layer in self.layers:
-            if method == InitMethod.XAVIER_NORMAL:
-                nn.init.xavier_normal_(layer.weight)
-            elif method == InitMethod.XAVIER_UNIFORM:
-                nn.init.xavier_uniform_(layer.weight)
-            elif method == InitMethod.KAIMING:
-                nn.init.kaiming_normal_(layer.weight)
-            elif method == InitMethod.NORMAL:
-                nn.init.normal_(layer.weight, std=0.01)
-            elif method == InitMethod.ZEROS:
-                nn.init.zeros_(layer.weight)
-            else:
-                raise ValueError(f"Unknown initialization method: {method}")
+            # First reset to PyTorch defaults
+            if hasattr(layer, "reset_parameters"):
+                layer.reset_parameters()
+
+            # Then apply custom initialization if different from default
+            if isinstance(layer, nn.Linear):
+                if method == InitMethod.XAVIER_NORMAL:
+                    nn.init.xavier_normal_(layer.weight)
+                elif method == InitMethod.XAVIER_UNIFORM:
+                    nn.init.xavier_uniform_(layer.weight)
+                elif method == InitMethod.KAIMING:
+                    nn.init.kaiming_normal_(layer.weight)
+                elif method == InitMethod.NORMAL:
+                    nn.init.normal_(layer.weight, std=0.01)
+                elif method == InitMethod.ZEROS:
+                    nn.init.zeros_(layer.weight)
+                else:
+                    raise ValueError(f"Unknown initialization method: {method}")
+
+                # Handle bias if present
+                if layer.bias is not None:
+                    nn.init.zeros_(layer.bias)
 
     @property
     def depth(self) -> int:
