@@ -4,65 +4,66 @@ Famous DLN architectures and toy models for research.
 This module provides well-known Deep Linear Network architectures from the
 literature, as well as simple toy models for experimentation.
 """
+# ruff: noqa: N802  # Model architecture names use PascalCase by convention
 
 import torch
 import torch.nn as nn
 
-from .constructors import DLN, BottleneckDLN
+from .constructors import DeepLinearNetwork, dln
 
 
 # Famous architectures from literature
-def LeNetLinear(input_dim: int = 784, num_classes: int = 10) -> nn.Sequential:
+def LeNetLinear(input_dim: int = 784, num_classes: int = 10) -> DeepLinearNetwork:
     """Linear approximation of LeNet architecture."""
-    return DLN([input_dim, 120, 84, num_classes])
+    return dln([input_dim, 120, 84, num_classes])
 
 
 def AlexNetLinear(
     input_dim: int = 224 * 224 * 3, num_classes: int = 1000
-) -> nn.Sequential:
+) -> DeepLinearNetwork:
     """Linear approximation of AlexNet architecture."""
-    return DLN([input_dim, 4096, 4096, num_classes])
+    return dln([input_dim, 4096, 4096, num_classes])
 
 
 def ResNetLinear18(
     input_dim: int = 224 * 224 * 3, num_classes: int = 1000
-) -> nn.Sequential:
+) -> DeepLinearNetwork:
     """Linear approximation of ResNet-18 layer widths."""
-    return DLN([input_dim, 64, 128, 256, 512, num_classes])
+    return dln([input_dim, 64, 128, 256, 512, num_classes])
 
 
 def VGGLinear11(
     input_dim: int = 224 * 224 * 3, num_classes: int = 1000
-) -> nn.Sequential:
+) -> DeepLinearNetwork:
     """Linear approximation of VGG-11 architecture."""
-    return DLN([input_dim, 64, 128, 256, 256, 512, 512, 512, 512, num_classes])
+    return dln([input_dim, 64, 128, 256, 256, 512, 512, 512, 512, num_classes])
 
 
 # Research toy models
 def TinyDLN(
     input_dim: int = 2, output_dim: int = 1, num_hidden: int = 5
-) -> nn.Sequential:
+) -> DeepLinearNetwork:
     """Minimal DLN for theoretical analysis."""
-    return DLN([input_dim] + [num_hidden] * 2 + [output_dim])
+    return dln([input_dim] + [num_hidden] * 2 + [output_dim])
 
 
 def SymmetricDLN(
     input_dim: int = 10, bottleneck: int = 3, output_dim: int = 10
-) -> nn.Sequential:
+) -> DeepLinearNetwork:
     """Symmetric encoder-decoder DLN."""
-    return DLN([input_dim, 7, 5, bottleneck, 5, 7, output_dim])
+    return dln([input_dim, 7, 5, bottleneck, 5, 7, output_dim])
 
 
 def OverparameterizedDLN(
     input_dim: int = 10, output_dim: int = 1, width: int = 100, depth: int = 10
-) -> nn.Sequential:
+) -> DeepLinearNetwork:
     """Highly overparameterized DLN for studying generalization."""
-    return DLN([input_dim] + [width] * depth + [output_dim])
+    return dln([input_dim] + [width] * depth + [output_dim])
 
 
 def DeepBottleneckDLN(
     input_dim: int, output_dim: int, bottleneck_dim: int, depth: int
-) -> nn.Sequential:
+) -> DeepLinearNetwork:
     """
     Deep bottleneck DLN with specified total depth.
 
@@ -75,7 +76,7 @@ def DeepBottleneckDLN(
         depth: Total number of layers
 
     Returns:
-        nn.Sequential DLN with bottleneck structure
+        DeepLinearNetwork with bottleneck structure
     """
     if depth < 3:
         raise ValueError("Deep bottleneck DLN requires at least 3 layers")
@@ -93,14 +94,14 @@ def DeepBottleneckDLN(
     # Combine (remove duplicate bottleneck dim)
     layer_dims = torch.cat([down_dims, up_dims[1:]]).tolist()
 
-    return DLN(layer_dims)
+    return dln(layer_dims)
 
 
 # For backward compatibility, map BottleneckDLN to DeepBottleneckDLN in zoo
-BottleneckDLN = DeepBottleneckDLN  # noqa: F811
+BottleneckDLN = DeepBottleneckDLN
 
 
-def PolynomialDLN(input_dim: int = 1, degree: int = 3) -> nn.Sequential:
+def PolynomialDLN(input_dim: int = 1, degree: int = 3) -> DeepLinearNetwork:
     """DLN that can represent polynomials up to given degree.
 
     Each layer doubles the dimension to create polynomial features.
@@ -109,30 +110,30 @@ def PolynomialDLN(input_dim: int = 1, degree: int = 3) -> nn.Sequential:
     for _ in range(degree):
         layers.append(layers[-1] * 2)
     layers.append(1)  # Output scalar
-    return DLN(layers)
+    return dln(layers)
 
 
 # Matrix factorization models
-def LowRankDLN(input_dim: int, output_dim: int, rank: int) -> nn.Sequential:
+def LowRankDLN(input_dim: int, output_dim: int, rank: int) -> DeepLinearNetwork:
     """Two-layer DLN that learns low-rank matrix factorization."""
-    return DLN([input_dim, rank, output_dim])
+    return dln([input_dim, rank, output_dim])
 
 
-def MatrixCompletion(matrix_shape: tuple[int, int], rank: int) -> nn.Sequential:
+def MatrixCompletion(matrix_shape: tuple[int, int], rank: int) -> DeepLinearNetwork:
     """DLN for matrix completion via factorization."""
     m, n = matrix_shape
-    return DLN([m, rank, n])
+    return dln([m, rank, n])
 
 
 # Compression/autoencoder models
-def LinearAutoencoder(input_dim: int, encoding_dim: int) -> nn.Sequential:
+def LinearAutoencoder(input_dim: int, encoding_dim: int) -> DeepLinearNetwork:
     """Linear autoencoder with symmetric encoder-decoder."""
     return SymmetricDLN(input_dim, encoding_dim, input_dim)
 
 
 def ProgressiveCompression(
     input_dim: int, compression_ratio: float = 0.5, num_layers: int = 4
-) -> nn.Sequential:
+) -> DeepLinearNetwork:
     """DLN that progressively compresses input."""
     layers = [input_dim]
     current_dim = input_dim
@@ -141,73 +142,75 @@ def ProgressiveCompression(
         current_dim = max(1, int(current_dim * compression_ratio))
         layers.append(current_dim)
 
-    return DLN(layers)
+    return dln(layers)
 
 
 # Function approximation models
-def FourierDLN(input_dim: int = 1, num_frequencies: int = 10) -> nn.Sequential:
+def FourierDLN(input_dim: int = 1, num_frequencies: int = 10) -> DeepLinearNetwork:
     """DLN for learning Fourier-like representations."""
-    return DLN([input_dim, num_frequencies * 2, num_frequencies, 1])
+    return dln([input_dim, num_frequencies * 2, num_frequencies, 1])
 
 
-def ChebyshevDLN(input_dim: int = 1, degree: int = 10) -> nn.Sequential:
+def ChebyshevDLN(input_dim: int = 1, degree: int = 10) -> DeepLinearNetwork:
     """DLN for Chebyshev polynomial approximation."""
-    return DLN([input_dim, degree, degree // 2, 1])
+    return dln([input_dim, degree, degree // 2, 1])
 
 
 # Ensemble/multi-task models
 def MultiTaskDLN(
     input_dim: int, num_tasks: int, shared_layers: list[int], task_layers: list[int]
-) -> dict[str, nn.Sequential]:
+) -> dict[str, DeepLinearNetwork]:
     """Create multiple DLNs with shared initial layers."""
-    shared = DLN([input_dim] + shared_layers)
+    shared = dln([input_dim, *shared_layers])
 
     tasks = {}
     for i in range(num_tasks):
-        task_specific = DLN([shared_layers[-1]] + task_layers)
+        task_specific = dln([shared_layers[-1], *task_layers])
         tasks[f"task_{i}"] = nn.Sequential(shared, task_specific)
 
     return tasks
 
 
 # Testing and validation models
-def IdentityDLN(dim: int) -> nn.Sequential:
+def IdentityDLN(dim: int) -> DeepLinearNetwork:
     """DLN that should learn identity function."""
-    return DLN([dim, dim * 2, dim])
+    return dln([dim, dim * 2, dim])
 
 
-def LinearRegressionDLN(input_dim: int) -> nn.Sequential:
+def LinearRegressionDLN(input_dim: int) -> DeepLinearNetwork:
     """Single layer for linear regression baseline."""
-    return DLN([input_dim, 1])
+    return dln([input_dim, 1])
 
 
 def DeepLinearRegression(
-    input_dim: int, depth: int = 5, width: int = None
-) -> nn.Sequential:
+    input_dim: int, depth: int = 5, width: int | None = None
+) -> DeepLinearNetwork:
     """Deep linear regression with specified depth."""
     if width is None:
         width = input_dim
-    return DLN([input_dim] + [width] * depth + [1])
+    return dln([input_dim] + [width] * depth + [1])
 
 
 # Pathological cases for analysis
-def RankDeficientDLN(input_dim: int, output_dim: int, min_rank: int) -> nn.Sequential:
+def RankDeficientDLN(
+    input_dim: int, output_dim: int, min_rank: int
+) -> DeepLinearNetwork:
     """DLN designed to have rank deficiency issues."""
-    return DLN([input_dim, min_rank, min_rank, output_dim])
+    return dln([input_dim, min_rank, min_rank, output_dim])
 
 
 def VanishingGradientDLN(
     input_dim: int, output_dim: int, depth: int = 20
-) -> nn.Sequential:
+) -> DeepLinearNetwork:
     """Very deep DLN to study vanishing gradients."""
     narrow_width = max(1, min(input_dim, output_dim) // 4)
-    return DLN([input_dim] + [narrow_width] * depth + [output_dim])
+    return dln([input_dim] + [narrow_width] * depth + [output_dim])
 
 
-def ExplodingGradientDLN(input_dim: int, output_dim: int) -> nn.Sequential:
+def ExplodingGradientDLN(input_dim: int, output_dim: int) -> DeepLinearNetwork:
     """Wide DLN that may have exploding gradient issues."""
     wide_width = input_dim * 10
-    return DLN([input_dim, wide_width, wide_width, output_dim])
+    return dln([input_dim, wide_width, wide_width, output_dim])
 
 
 # Model collections
