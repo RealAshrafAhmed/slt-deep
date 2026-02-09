@@ -15,8 +15,6 @@ resolution-markers = [
 
 [manifest]
 members = [
-    "samplers",
-    "scipy-extensions",
     "slt-deep",
     "torch-bdn",
     "torch-dln",
@@ -3865,33 +3863,6 @@ wheels = [
 ]
 
 [[package]]
-name = "samplers"
-version = "0.1.0"
-source = { editable = "projects/dln/packages/samplers" }
-dependencies = [
-    { name = "blackjax" },
-    { name = "jax" },
-    { name = "jaxlib" },
-    { name = "matplotlib" },
-    { name = "numpy" },
-    { name = "scipy" },
-    { name = "torch" },
-    { name = "tqdm" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "blackjax", specifier = ">=1.0.0" },
-    { name = "jax", specifier = ">=0.4.0" },
-    { name = "jaxlib", specifier = ">=0.4.0" },
-    { name = "matplotlib", specifier = ">=3.7.0" },
-    { name = "numpy", specifier = ">=1.24.0" },
-    { name = "scipy", specifier = ">=1.10.0" },
-    { name = "torch", specifier = ">=2.0.0" },
-    { name = "tqdm", specifier = ">=4.65.0" },
-]
-
-[[package]]
 name = "scipy"
 version = "1.17.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3951,11 +3922,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/58/a8/a66a75c3d8f1fb2b83f66007d6455a06a6f6cf5618c3dc35bc9b69dd096e/scipy-1.17.0-cp314-cp314t-win_amd64.whl", hash = "sha256:1ff269abf702f6c7e67a4b7aad981d42871a11b9dd83c58d2d2ea624efbd1088", size = 37098574, upload-time = "2026-01-10T21:30:40.782Z" },
     { url = "https://files.pythonhosted.org/packages/56/a5/df8f46ef7da168f1bc52cd86e09a9de5c6f19cc1da04454d51b7d4f43408/scipy-1.17.0-cp314-cp314t-win_arm64.whl", hash = "sha256:031121914e295d9791319a1875444d55079885bbae5bdc9c5e0f2ee5f09d34ff", size = 25246266, upload-time = "2026-01-10T21:30:45.923Z" },
 ]
-
-[[package]]
-name = "scipy-extensions"
-version = "0.1.0"
-source = { editable = "packages/scipy_extensions" }
 
 [[package]]
 name = "seaborn"
@@ -4021,7 +3987,6 @@ dependencies = [
     { name = "nutpie" },
     { name = "papermill" },
     { name = "pathlib2" },
-    { name = "scipy-extensions" },
     { name = "seaborn" },
     { name = "torch" },
     { name = "torch-bdn" },
@@ -4073,12 +4038,11 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.2" },
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "runcell", marker = "extra == 'dev'", specifier = ">=0.1.17" },
-    { name = "scipy-extensions", editable = "packages/scipy_extensions" },
     { name = "seaborn", specifier = ">=0.13.2" },
     { name = "torch", specifier = ">=2.0.0" },
     { name = "torch-bdn", editable = "packages/torch_bdn" },
     { name = "torch-dln", editable = "packages/torch_dln" },
-    { name = "torch-random", editable = "packages/torch-random" },
+    { name = "torch-random", editable = "packages/torch_random" },
     { name = "tqdm", specifier = ">=4.67.1" },
     { name = "typer", specifier = ">=0.16" },
 ]
@@ -4341,7 +4305,7 @@ requires-dist = [{ name = "torch", specifier = ">=2.0.0" }]
 [[package]]
 name = "torch-random"
 version = "0.1.0"
-source = { editable = "packages/torch-random" }
+source = { editable = "packages/torch_random" }
 dependencies = [
     { name = "numpy" },
     { name = "torch" },

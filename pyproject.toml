@@ -18,7 +18,6 @@ dependencies = [
     "jaxlib>=0.4.0",   # JAX linear algebra backend
     "blackjax>=1.0.0", # MCMC sampling (HMC, SGLD)
     "arviz>=0.17.0",   # Bayesian analysis and diagnostics
-    "scipy_extensions",
     "torch-random",
     "torch-bdn",
     "torch-dln",
@@ -51,8 +50,6 @@ members = [
 ]
 
 [tool.uv.sources]
-scipy_extensions = { workspace = true }
-kl = { workspace = true }
 torch-random = { workspace = true, editable = true }
 torch-bdn = { workspace = true, editable = true }
 torch-dln = { workspace = true, editable = true }
@@ -68,6 +65,8 @@ indent-style = "space"
 [tool.pytest.ini_options]
 testpaths = ["packages", "projects"]
 python_files = ["test_*.py", "*_test.py"]
+
+[tool.ruff]
 select = [
     "E",
     "W",

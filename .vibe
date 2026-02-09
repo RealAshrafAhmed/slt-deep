@@ -1,0 +1,138 @@
+# SLT-Deep AI Guidelines
+
+This is the **Singular Learning Theory Deep Learning** repository for research into deep learning models through the lens of SLT. AI agents should respect the following structure and conventions:
+
+## Repository Structure
+
+```
+slt-deep/
+├── packages/           # Core SLT packages and libraries
+│   ├── torch_bdn/      # Bayesian Deep Networks with MCMC backends
+│   ├── torch_dln/      # Deep Linear Networks for SLT analysis
+│   └── torch_random/   # Gibbs sampling for synthetic data generation
+├── projects/           # Individual research projects and experiments
+│   └── dln/           # Deep Linear Network experiments
+└── pyproject.toml     # Root workspace configuration
+```
+
+## Working Principles
+
+### 1. **Package Development Focus**
+- Core packages in `packages/` contain reusable SLT analysis tools
+- Each package should be self-contained with proper tests and documentation
+- Changes to packages affect the entire SLT research ecosystem
+
+### 2. **Research Workflow**
+- This is cutting-edge research code - prioritize mathematical correctness
+- Document theoretical foundations and implementation details
+- Notebooks in `projects/*/notebooks/` for experimental analysis
+- Papers and documentation in `projects/*/paper/`
+
+### 3. **Mathematical Rigor**
+- Implementations must match theoretical SLT foundations
+- Proper handling of multivariate distributions and noise scaling
+- Vectorized operations for computational efficiency
+- Clear distinction between batching vs vectorization
+
+### 4. **Testing Standards - CUCUMBER STYLE REQUIRED**
+- **ALL test functions must use cucumber/BDD naming convention**
+- Use `test_should_[behavior]_when_[condition]` or `test_should_[behavior]_for_[scenario]`
+- Examples:
+  - ✅ `test_should_generate_gaussian_samples_for_mse_loss`
+  - ✅ `test_should_infer_correct_shape_from_linear_model`
+  - ✅ `test_should_raise_error_when_model_has_no_linear_layers`
+  - ❌ `test_mse_loss` (too brief, not descriptive)
+  - ❌ `test_linear_model` (doesn't describe expected behavior)
+- Docstrings should describe the expected behavior clearly
+- Tests should be behavior-focused, not implementation-focused
+
+### 5. **Dependency Management**
+- Use `uv` workspace for managing all packages
+- Each package has its own `pyproject.toml` with proper dependencies
+- Development dependencies include pytest for comprehensive testing
+
+## SLT-Specific Guidelines
+
+### Mathematical Implementation:
+- **Gibbs Sampling**: Proper conditional distributions based on loss functions
+- **MCMC Methods**: HMC, SGLD with theoretically sound parameterizations
+- **Local Learning Coefficient**: Accurate computation for deep learning models
+- **KL Divergence Profiling**: Efficient estimation techniques
+
+### Current Limitations (Document These):
+- **Input handling**: Only Linear input layers supported (no Conv2D/Conv1D)
+- **Output shapes**: Only scalar/vector outputs (no multi-dimensional tensors like images)
+- **Distribution assumptions**: Single input distribution (no mixed data types)
+
+### When Working with Models:
+- Use `model.eval()` for consistent synthetic data generation
+- Employ `torch.no_grad()` for memory-efficient sampling
+- Ensure reproducibility with proper seed handling
+- Validate mathematical assumptions (noise scales, distribution types)
+
+## Testing Philosophy
+
+### Cucumber/BDD Style Requirements:
+```python
+# ✅ GOOD - Describes expected behavior
+def test_should_generate_correlated_data_for_scalar_regression_model(self):
+    """Should generate x,y pairs where y is related to x through model with noise."""
+
+def test_should_be_reproducible_when_using_same_seed(self):
+    """Should generate identical results when using the same random seed."""
+
+# ❌ BAD - Implementation-focused, not behavior-focused
+def test_scalar_regression(self):
+def test_seed_reproducibility(self):
+```
+
+### Test Categories:
+- **Shape validation**: Ensure correct tensor dimensions
+- **Mathematical correctness**: Verify distribution parameters and noise scaling
+- **Error boundaries**: Test unsupported cases raise appropriate exceptions
+- **Integration workflows**: End-to-end functionality validation
+- **Reproducibility**: Seed-based deterministic behavior
+
+## AI Agent Guidelines
+
+### When Creating Tests:
+- **ALWAYS use cucumber/BDD naming**: `test_should_[behavior]_[condition]`
+- Write descriptive docstrings explaining expected behavior
+- Test both success cases and error conditions
+- Include mathematical validation (statistical properties, shape consistency)
+
+### When Implementing SLT Methods:
+- Verify theoretical foundations before implementation
+- Document mathematical assumptions clearly
+- Handle edge cases gracefully (unsupported architectures, invalid inputs)
+- Provide clear error messages for limitations
+
+### When Modifying Existing Code:
+- Run comprehensive test suite after changes
+- Ensure mathematical properties are preserved
+- Update documentation for any API changes
+- Consider impact on downstream research projects
+
+### Research Ethics:
+- Maintain highest standards for mathematical correctness
+- Document limitations and assumptions explicitly
+- Provide reproducible examples and benchmarks
+- Consider computational efficiency for large-scale research
+
+## Common Operations
+
+- **Run tests**: `uv run pytest packages/package-name/tests/ -v`
+- **Install dev deps**: `uv sync --extra dev`
+- **Validate changes**: `uv run pytest --tb=short`
+- **Check formatting**: `uv run ruff check packages/`
+
+## Questions to Ask Before Acting:
+
+1. Does this implementation match the theoretical SLT foundations?
+2. Are test names following cucumber/BDD convention (`test_should_*`)?
+3. Will this change affect mathematical correctness of other packages?
+4. Are the limitations clearly documented?
+5. Is the behavior reproducible and deterministic?
+6. Does this handle edge cases gracefully?
+
+Remember: This is foundational research infrastructure for Singular Learning Theory. Mathematical rigor, comprehensive testing with descriptive names, and clear documentation are paramount.

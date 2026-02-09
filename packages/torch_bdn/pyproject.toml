@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Bayesian Deep Networks for PyTorch with pluggable MCMC sampling backends"
 readme = "README.md"
 authors = [
-    { name = "Ashraf Ahmed", email = "ashrafahmed@sophi.io" }
+    { name = "Ashraf Ahmed", email = "z@ashahmed.io" }
 ]
 requires-python = ">=3.12"
 dependencies = [
