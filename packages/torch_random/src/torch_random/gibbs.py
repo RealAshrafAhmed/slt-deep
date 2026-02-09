@@ -11,13 +11,15 @@ import torch.nn as nn
 
 def gibbs(
     model: nn.Module,
-    loss_fn: nn.Module,
-    n_samples: int,
-    input_dist: torch.distributions.Distribution,
+    loss_fn: nn.modules.loss._Loss,
+    x: torch.Tensor,
     device: str = "cpu",
-) -> tuple[torch.Tensor, torch.Tensor]:
+) -> torch.Tensor:
     """
-    Sample (x, y) data from conditional Gibbs measure defined by model and loss.
+    Sample y ~ p(y|x) from conditional Gibbs measure given input data x.
+
+    Follows scipy.stats and PyTorch distributions convention where conditioning
+    variables are provided directly to the sampling function.
 
     The loss function determines the conditional distribution p(y|x):
     - MSELoss → Gaussian: y = model(x) + N(0, σ²)
@@ -25,79 +27,52 @@ def gibbs(
     - CrossEntropyLoss → Categorical: y ~ Categorical(softmax(model(x)))
 
     Args:
-        model: PyTorch model to generate data from (must start with nn.Linear layer)
+        model: PyTorch model to generate conditional mean/logits
         loss_fn: Loss function (determines likelihood type and noise scale)
-        n_samples: Number of (x, y) pairs to generate
-        input_dist: Distribution for sampling inputs
+        x: Input tensor of shape (n, *input_shape) - the conditioning variables
         device: Device to run on
 
     Returns:
-        Tuple of (x_data, y_data) tensors
+        Sampled y tensor of shape (n, *output_shape)
 
     Note:
         IMPORTANT LIMITATIONS:
-
-        INPUT: Only supports models that start with nn.Linear layers for vector inputs.
-        Conv2D/Conv1D/other input layers are not supported - no image/sequence inputs.
 
         OUTPUT: Only supports scalar and vector outputs like [batch, 1] or [batch, n_features].
         Multi-dimensional tensor outputs (images, sequences) are not yet implemented.
         Shapes like [batch, channels, height, width] will raise NotImplementedError.
 
     Examples:
-        # Standard Normal inputs
-        model = nn.Sequential(nn.Linear(2, 3), nn.Linear(3, 1))
-        normal_dist = torch.distributions.Normal(0, 1)
-        x, y = gibbs(model, nn.MSELoss(), 1000, normal_dist)
+        # Basic usage - provide x directly (like scipy/pytorch convention)
+        model = nn.Sequential(nn.Linear(2, 1))
+        x = torch.randn(1000, 2)  # Your input data
+        y = gibbs(model, nn.MSELoss(), x)  # Sample y ~ p(y|x)
 
-        # Uniform[-2, 2] inputs
-        uniform_dist = torch.distributions.Uniform(-2, 2)
-        x, y = gibbs(model, nn.MSELoss(), 1000, uniform_dist)
+        # Uncertainty quantification
+        x_test = torch.randn(100, 2)
+        y_samples = [gibbs(model, nn.MSELoss(), x_test) for _ in range(50)]
+        y_samples = torch.stack(y_samples)  # (50, 100, output_dim)
+
+        # Different input distributions
+        x_uniform = torch.rand(1000, 2) * 4 - 2  # Uniform[-2, 2]
+        y_uniform = gibbs(model, nn.MSELoss(), x_uniform)
+
+        # Classification example
+        model_cls = nn.Sequential(nn.Linear(2, 3))  # 3 classes
+        y_cls = gibbs(model_cls, nn.CrossEntropyLoss(), x)  # Returns class indices
     """
     model = model.to(device)
+    x = x.to(device)
     # Set to eval mode to disable dropout and fix batch norm statistics
     # for consistent synthetic data generation
     model.eval()
 
-    # Infer input shape from model (excluding batch dimension)
-    input_shape = _infer_input_shape(model)
-
-    # Sample inputs x
-    x_data = _sample_inputs(n_samples, input_shape, input_dist, device)
-
     # Generate outputs y based on loss function type
     with torch.no_grad():
-        mus = model(x_data)
+        mus = model(x)
         y_data = _sample_outputs(mus, loss_fn)
 
-    return x_data, y_data
-
-
-def _infer_input_shape(model: nn.Module) -> tuple:
-    """Infer input shape (excluding batch dimension) from model's first layer."""
-    for module in model.modules():
-        if isinstance(module, nn.Linear):
-            return (module.in_features,)
-
-    raise ValueError(
-        "Could not infer input shape from model. Only Linear input layers are currently supported."
-    )
-
-
-def _sample_inputs(
-    n_samples: int,
-    input_shape: tuple,
-    distribution: torch.distributions.Distribution,
-    device: str,
-) -> torch.Tensor:
-    """Sample input data x using the provided distribution."""
-    full_shape = (n_samples, *input_shape)
-
-    # Note: Sampling happens on whatever device the distribution parameters are on,
-    # then we move to target device. For efficiency, users should create distributions
-    # with parameters already on the target device.
-    samples = distribution.sample(full_shape)
-    return samples.to(device)
+    return y_data
 
 
 def _sample_outputs(mus: torch.Tensor, loss_fn: nn.Module) -> torch.Tensor:

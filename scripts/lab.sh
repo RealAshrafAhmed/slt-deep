@@ -2,7 +2,7 @@
 # Register the current Python environment as a Jupyter kernel and start Jupyter Lab
 
 # Register kernel
-uv run python -m ipykernel install --user --name=research-monorepo
+uv run python -m ipykernel install --user --name=slt-deep
 
 # Trust notebooks to enable widgets (in case new ones were added)
 if find . -name "*.ipynb" -type f | head -1 > /dev/null 2>&1; then
