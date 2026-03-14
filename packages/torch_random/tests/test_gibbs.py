@@ -223,7 +223,7 @@ class TestGibbsIntegration:
         model.train()
         assert model.training
 
-        x, y = gibbs(model, loss_fn, 100, input_dist)
+        _, _ = gibbs(model, loss_fn, 100, input_dist)
 
         # Model should be in eval mode after gibbs call
         assert not model.training

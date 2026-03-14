@@ -10,4 +10,4 @@ from .sampling import list_backends, register_backend
 
 __version__ = "0.1.0"
 
-__all__ = ["BayesianNet", "register_backend", "list_backends"]
+__all__ = ["BayesianNet", "list_backends", "register_backend"]
