@@ -51,6 +51,13 @@ slt-deep/
 - Each package has its own `pyproject.toml` with proper dependencies
 - Development dependencies include pytest for comprehensive testing
 
+### 6. **Task Orchestration Philosophy**
+- Use `mise` for orchestration and task entrypoints at monorepo scope
+- Use `uv` for Python environment and command runtime
+- Use `papermill` for notebook execution and parameterization
+- Prefer declarative mise tasks over ad-hoc orchestration scripts
+- Keep notebook stages parameterized; avoid copy-pasting near-identical notebook pipelines
+
 ## SLT-Specific Guidelines
 
 ### Mathematical Implementation:
@@ -125,6 +132,9 @@ def test_seed_reproducibility(self):
 - **Install dev deps**: `uv sync --extra dev`
 - **Validate changes**: `uv run pytest --tb=short`
 - **Check formatting**: `uv run ruff check packages/`
+- **List orchestrated tasks**: `mise tasks`
+- **Run project pipeline task**: `mise run <task-name>`
+- **Notebook execution backend**: `uv run papermill input.ipynb output.ipynb -p key value`
 
 ## Questions to Ask Before Acting:
 

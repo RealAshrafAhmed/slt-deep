@@ -6,9 +6,20 @@ set -e  # Exit on any error
 
 echo "🚀 Setting up workspace..."
 
+if ! command -v mise > /dev/null 2>&1; then
+    echo "❌ mise is required for this repository." >&2
+    echo "   Install it first: https://mise.jdx.dev/getting-started.html" >&2
+    exit 1
+fi
+
 # Install all dependencies (including workspace packages)
 echo "📦 Installing all dependencies and building workspace packages..."
 uv sync --extra dev
+
+# Install mise-managed tools.
+echo "🧰 Installing mise-managed tools..."
+mise install
+echo "✅ mise tools installed"
 
 # Trust all notebooks to enable widgets and interactive elements
 echo "🔐 Trusting notebooks to enable widgets..."
@@ -26,6 +37,7 @@ echo "🧹 Cleaning up temporary files..."
 echo "✅ Setup complete!"
 echo ""
 echo "🎉 Your research monorepo is ready! Next steps:"
+echo "  • Run 'mise tasks' to inspect available monorepo tasks"
 echo "  • Run './scripts/lab.sh' to start Jupyter Lab"
 echo "  • Run 'uv run pre-commit install' to set up pre-commit hooks"
 echo "  • Check README.md for more commands and customization tips"

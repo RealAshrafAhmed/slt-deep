@@ -58,11 +58,15 @@ markov-chain = { workspace = true, editable = true }
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]  # unused imports ok in __init__
+"**/data/**/executed/**" = [
+    "ALL",
+]  # papermill output notebooks are artifacts, not source
 "**/notebooks/**" = [
     "E402",
     "F401",
     "F403",
     "N806",
+    "N812",
     "C408",
     "NPY002",
     "RUF001",

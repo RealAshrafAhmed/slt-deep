@@ -159,12 +159,16 @@ uv run pre-commit install
 git clone https://github.com/RealAshrafAhmed/slt-deep.git
 cd slt-deep
 
+# Install mise (required): https://mise.jdx.dev/getting-started.html
+# Verify it is available
+mise --version
+
 # Complete setup (installs all deps + builds SLT libraries)
 ./scripts/setup.sh
 
-# OR do it manually:
-# Install all dependencies (main + dev + workspace packages)
-uv sync --extra dev
+# Install configured tools and inspect tasks
+mise install
+mise tasks
 
 # Set up pre-commit hooks (optional but recommended)
 uv run pre-commit install
@@ -195,6 +199,33 @@ uv sync --extra dev
 uv sync --all-groups
 ```
 ## Common Commands
+
+### Orchestration and Execution Model
+
+- **Task orchestration**: `mise`
+- **Python environment/runtime**: `uv`
+- **Notebook execution**: `papermill`
+
+Use `mise` tasks as project entrypoints, and keep notebook execution parameterized through `uv run papermill`.
+
+### Project Execution Examples
+
+```bash
+# List available orchestrated tasks
+mise tasks
+
+# Markov chain learning pipeline (single regime, full variant)
+mise run mcl:pipeline -- --regime single --variant full --epochs 5
+
+# Run only training stage for a variant
+mise run mcl:training -- --regime single --variant no_token --epochs 25
+
+# Run full matrix for markov-chain-learning
+mise run mcl:matrix
+
+# Restricted matrix
+mise run mcl:matrix -- --regimes single,two_far --variants full,no_pos --epochs 20
+```
 
 ### Packages
 

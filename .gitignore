@@ -59,6 +59,13 @@ papers/*.pdf
 papers/figures/
 papers/build/
 
+# Mill build artifacts
+out/mill-build/
+out/mill-launcher/
+out/mill-server/
+out/mill-lock
+out/mill-runner-state.json
+
 # Experiment tracking
 wandb/
 mlruns/

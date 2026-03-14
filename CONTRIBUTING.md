@@ -5,12 +5,24 @@
 1. Clone the repository and navigate to it
 2. Install dependencies:
    ```bash
-   uv sync --extra dev
+   ./scripts/setup.sh
    ```
-3. Install pre-commit hooks:
+3. If using mise tasks, install toolchain and inspect tasks:
+   ```bash
+   mise install
+   mise tasks
+   ```
+4. Install pre-commit hooks:
    ```bash
    uv run pre-commit install
    ```
+
+## Orchestration Standards
+
+- Use `mise` as the task orchestrator for project workflows.
+- Use `uv` for Python runtime and dependency management.
+- Use `papermill` for notebook execution.
+- Prefer adding or updating mise tasks in `.mise.toml` instead of creating standalone orchestration scripts.
 
 ## Workflow
 
@@ -64,6 +76,18 @@ uv sync --extra dev
 - Project-specific notebooks go in `projects/yourproject/`
 - Always restart kernel after updating packages
 - Keep notebooks clean (use `nbqa-ruff` for linting)
+
+### Running Project Pipelines
+
+```bash
+# List available tasks
+mise tasks
+
+# Run an orchestrated pipeline task (example)
+mise run mcl:pipeline
+```
+
+Set task-specific environment variables as needed (for example `REGIME`, `VARIANT`, `EPOCHS`).
 
 ### Code Style
 
