@@ -215,16 +215,16 @@ Use `mise` tasks as project entrypoints, and keep notebook execution parameteriz
 mise tasks
 
 # Markov chain learning pipeline (single regime, full variant)
-mise run mt-mcl:pipeline -- --regime single --variant full --epochs 5
+mise run mcl-2mc:pipeline -- --regime single --variant full --epochs 5
 
 # Run only training stage for a variant
-mise run mt-mcl:training -- --regime single --variant no_token --epochs 25
+mise run mcl-2mc:training -- --regime single --variant no_token --epochs 25
 
 # Run full matrix for markov-chain-learning
-mise run mt-mcl:matrix
+mise run mcl-2mc:matrix
 
 # Restricted matrix
-mise run mt-mcl:matrix -- --regimes single,two_far --variants full,no_pos --epochs 20
+mise run mcl-2mc:matrix -- --regimes single,two_far --variants full,no_pos --epochs 20
 ```
 
 ### Packages

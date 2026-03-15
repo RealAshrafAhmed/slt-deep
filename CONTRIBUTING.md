@@ -84,7 +84,7 @@ uv sync --extra dev
 mise tasks
 
 # Run an orchestrated pipeline task (example)
-mise run mt-mcl:pipeline
+mise run mcl-2mc:pipeline
 ```
 
 Set task-specific environment variables as needed (for example `REGIME`, `VARIANT`, `EPOCHS`).

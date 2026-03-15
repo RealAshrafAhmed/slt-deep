@@ -24,22 +24,28 @@ This experiment isolates training on a **single Markov chain** and focuses on:
 
 Run from repository root (`slt-deep/`).
 
+## Task Definitions
+
+- Experiment tasks for this folder live in `projects/markov-chain-learning/experiments/single-chain/tasks.mise.toml`.
+- Root task loading is configured in `slt-deep/.mise.toml` via `task_config.includes`.
+- Add new experiment-specific tasks in this local `tasks.mise.toml` file, not in the root mise file.
+
 ### Smoke run
 
 ```bash
-mise run mt-sc:pipeline -- --variant full --epochs 5
+mise run mcl-sc:pipeline -- --variant full --epochs 5
 ```
 
 ### Full run
 
 ```bash
-mise run mt-sc:pipeline -- --variant full --epochs 50 --n-sequences 10000
+mise run mcl-sc:pipeline -- --variant full --epochs 50 --n-sequences 10000
 ```
 
 ### Focus notebook only
 
 ```bash
-mise run mt-sc:focus -- --variant full
+mise run mcl-sc:focus -- --variant full
 ```
 
 ## Outputs

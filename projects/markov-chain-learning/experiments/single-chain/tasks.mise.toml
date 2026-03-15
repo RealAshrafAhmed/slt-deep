@@ -1,0 +1,252 @@
+["mcl-sc:dataset"]
+description = "Single-chain sub-experiment: generate dataset notebook"
+dir = "projects/markov-chain-learning/experiments/single-chain"
+usage = '''
+flag "--dataset-seed <seed>" help="Dataset seed" env="DATASET_SEED" default="0"
+flag "--n-sequences <n>" help="Number of generated sequences" env="N_SEQUENCES" default="10000"
+flag "--max-seq-len <n>" help="Maximum sequence length" env="MAX_SEQ_LEN" default="32"
+'''
+run = '''
+set -euo pipefail
+
+DATASET_SEED="${usage_dataset_seed?}"
+N_SEQUENCES="${usage_n_sequences?}"
+MAX_SEQ_LEN="${usage_max_seq_len?}"
+
+DATA_DIR="$(pwd)/data/single"
+EXEC_DIR="$DATA_DIR/executed"
+mkdir -p "$EXEC_DIR"
+
+uv run papermill \
+	notebooks/02_dataset.ipynb \
+	"$EXEC_DIR/02_dataset.ipynb" \
+	-p DATA_DIR "$DATA_DIR" \
+	-p DGP_REGIME "single" \
+	-p SEED "$DATASET_SEED" \
+	-p N_SEQUENCES "$N_SEQUENCES" \
+	-p MAX_SEQ_LEN "$MAX_SEQ_LEN"
+'''
+
+["mcl-sc:training"]
+description = "Single-chain sub-experiment: run training notebook"
+dir = "projects/markov-chain-learning/experiments/single-chain"
+usage = '''
+flag "--variant <variant>" {
+  help "Embedding ablation variant"
+  env "VARIANT"
+  default "full"
+  choices "full" "no_token" "no_pos" "no_embeddings"
+}
+flag "--dataset-seed <seed>" help="Dataset seed" env="DATASET_SEED" default="0"
+flag "--n-sequences <n>" help="Number of generated sequences" env="N_SEQUENCES" default="10000"
+flag "--max-seq-len <n>" help="Maximum sequence length" env="MAX_SEQ_LEN" default="32"
+flag "--training-seed <seed>" help="Training seed" env="TRAINING_SEED" default="42"
+flag "--epochs <n>" help="Training epochs" env="EPOCHS" default="50"
+flag "--lr <lr>" help="Learning rate" env="LR" default="0.003"
+flag "--batch-size <n>" help="Batch size" env="BATCH_SIZE" default="256"
+'''
+run = '''
+set -euo pipefail
+
+VARIANT="${usage_variant?}"
+DATASET_SEED="${usage_dataset_seed?}"
+N_SEQUENCES="${usage_n_sequences?}"
+MAX_SEQ_LEN="${usage_max_seq_len?}"
+TRAINING_SEED="${usage_training_seed?}"
+EPOCHS="${usage_epochs?}"
+LR="${usage_lr?}"
+BATCH_SIZE="${usage_batch_size?}"
+
+DATA_DIR="$(pwd)/data/single"
+EXEC_DIR="$DATA_DIR/executed"
+mkdir -p "$EXEC_DIR"
+
+if [[ ! -f "$DATA_DIR/sequences.pt" ]]; then
+	mise run mcl-sc:dataset -- \
+		--dataset-seed "$DATASET_SEED" \
+		--n-sequences "$N_SEQUENCES" \
+		--max-seq-len "$MAX_SEQ_LEN"
+fi
+
+uv run papermill \
+	notebooks/04_training.ipynb \
+	"$EXEC_DIR/04_training_${VARIANT}.ipynb" \
+	-p DATA_DIR "$DATA_DIR" \
+	-p EMBEDDING_VARIANT "$VARIANT" \
+	-p SEED "$TRAINING_SEED" \
+	-p EPOCHS "$EPOCHS" \
+	-p LR "$LR" \
+	-p BATCH_SIZE "$BATCH_SIZE"
+'''
+
+["mcl-sc:analysis"]
+description = "Single-chain sub-experiment: run baseline analysis notebook"
+dir = "projects/markov-chain-learning/experiments/single-chain"
+usage = '''
+flag "--variant <variant>" {
+  help "Embedding ablation variant"
+  env "VARIANT"
+  default "full"
+  choices "full" "no_token" "no_pos" "no_embeddings"
+}
+flag "--dataset-seed <seed>" help="Dataset seed" env="DATASET_SEED" default="0"
+flag "--n-sequences <n>" help="Number of generated sequences" env="N_SEQUENCES" default="10000"
+flag "--max-seq-len <n>" help="Maximum sequence length" env="MAX_SEQ_LEN" default="32"
+flag "--training-seed <seed>" help="Training seed" env="TRAINING_SEED" default="42"
+flag "--epochs <n>" help="Training epochs" env="EPOCHS" default="50"
+flag "--lr <lr>" help="Learning rate" env="LR" default="0.003"
+flag "--batch-size <n>" help="Batch size" env="BATCH_SIZE" default="256"
+'''
+run = '''
+set -euo pipefail
+
+VARIANT="${usage_variant?}"
+DATASET_SEED="${usage_dataset_seed?}"
+N_SEQUENCES="${usage_n_sequences?}"
+MAX_SEQ_LEN="${usage_max_seq_len?}"
+TRAINING_SEED="${usage_training_seed?}"
+EPOCHS="${usage_epochs?}"
+LR="${usage_lr?}"
+BATCH_SIZE="${usage_batch_size?}"
+
+DATA_DIR="$(pwd)/data/single"
+EXEC_DIR="$DATA_DIR/executed"
+mkdir -p "$EXEC_DIR"
+
+if [[ ! -f "$DATA_DIR/checkpoint_${VARIANT}.pt" ]]; then
+	mise run mcl-sc:training -- \
+		--variant "$VARIANT" \
+		--dataset-seed "$DATASET_SEED" \
+		--n-sequences "$N_SEQUENCES" \
+		--max-seq-len "$MAX_SEQ_LEN" \
+		--training-seed "$TRAINING_SEED" \
+		--epochs "$EPOCHS" \
+		--lr "$LR" \
+		--batch-size "$BATCH_SIZE"
+fi
+
+uv run papermill \
+	notebooks/05_analysis.ipynb \
+	"$EXEC_DIR/05_analysis_${VARIANT}.ipynb" \
+	-p DATA_DIR "$DATA_DIR" \
+	-p EMBEDDING_VARIANT "$VARIANT"
+'''
+
+["mcl-sc:focus"]
+description = "Single-chain sub-experiment: run focused analysis notebook"
+dir = "projects/markov-chain-learning/experiments/single-chain"
+usage = '''
+flag "--variant <variant>" {
+  help "Embedding ablation variant"
+  env "VARIANT"
+  default "full"
+  choices "full" "no_token" "no_pos" "no_embeddings"
+}
+flag "--dataset-seed <seed>" help="Dataset seed" env="DATASET_SEED" default="0"
+flag "--n-sequences <n>" help="Number of generated sequences" env="N_SEQUENCES" default="10000"
+flag "--max-seq-len <n>" help="Maximum sequence length" env="MAX_SEQ_LEN" default="32"
+flag "--training-seed <seed>" help="Training seed" env="TRAINING_SEED" default="42"
+flag "--epochs <n>" help="Training epochs" env="EPOCHS" default="50"
+flag "--lr <lr>" help="Learning rate" env="LR" default="0.003"
+flag "--batch-size <n>" help="Batch size" env="BATCH_SIZE" default="256"
+'''
+run = '''
+set -euo pipefail
+
+VARIANT="${usage_variant?}"
+DATASET_SEED="${usage_dataset_seed?}"
+N_SEQUENCES="${usage_n_sequences?}"
+MAX_SEQ_LEN="${usage_max_seq_len?}"
+TRAINING_SEED="${usage_training_seed?}"
+EPOCHS="${usage_epochs?}"
+LR="${usage_lr?}"
+BATCH_SIZE="${usage_batch_size?}"
+
+DATA_DIR="$(pwd)/data/single"
+EXEC_DIR="$DATA_DIR/executed"
+mkdir -p "$EXEC_DIR"
+
+if [[ ! -f "$DATA_DIR/checkpoint_${VARIANT}.pt" ]]; then
+	mise run mcl-sc:training -- \
+		--variant "$VARIANT" \
+		--dataset-seed "$DATASET_SEED" \
+		--n-sequences "$N_SEQUENCES" \
+		--max-seq-len "$MAX_SEQ_LEN" \
+		--training-seed "$TRAINING_SEED" \
+		--epochs "$EPOCHS" \
+		--lr "$LR" \
+		--batch-size "$BATCH_SIZE"
+fi
+
+uv run papermill \
+	notebooks/06_single_chain_focus.ipynb \
+	"$EXEC_DIR/06_single_chain_focus_${VARIANT}.ipynb" \
+	-p DATA_DIR "$DATA_DIR" \
+	-p EMBEDDING_VARIANT "$VARIANT"
+'''
+
+["mcl-sc:pipeline"]
+description = "Single-chain sub-experiment: dataset -> training -> baseline analysis -> focus analysis"
+dir = "projects/markov-chain-learning/experiments/single-chain"
+usage = '''
+flag "--variant <variant>" {
+  help "Embedding ablation variant"
+  env "VARIANT"
+  default "full"
+  choices "full" "no_token" "no_pos" "no_embeddings"
+}
+flag "--dataset-seed <seed>" help="Dataset seed" env="DATASET_SEED" default="0"
+flag "--n-sequences <n>" help="Number of generated sequences" env="N_SEQUENCES" default="10000"
+flag "--max-seq-len <n>" help="Maximum sequence length" env="MAX_SEQ_LEN" default="32"
+flag "--training-seed <seed>" help="Training seed" env="TRAINING_SEED" default="42"
+flag "--epochs <n>" help="Training epochs" env="EPOCHS" default="50"
+flag "--lr <lr>" help="Learning rate" env="LR" default="0.003"
+flag "--batch-size <n>" help="Batch size" env="BATCH_SIZE" default="256"
+'''
+run = '''
+set -euo pipefail
+
+VARIANT="${usage_variant?}"
+DATASET_SEED="${usage_dataset_seed?}"
+N_SEQUENCES="${usage_n_sequences?}"
+MAX_SEQ_LEN="${usage_max_seq_len?}"
+TRAINING_SEED="${usage_training_seed?}"
+EPOCHS="${usage_epochs?}"
+LR="${usage_lr?}"
+BATCH_SIZE="${usage_batch_size?}"
+
+mise run mcl-sc:dataset -- \
+	--dataset-seed "$DATASET_SEED" \
+	--n-sequences "$N_SEQUENCES" \
+	--max-seq-len "$MAX_SEQ_LEN"
+
+mise run mcl-sc:training -- \
+	--variant "$VARIANT" \
+	--dataset-seed "$DATASET_SEED" \
+	--n-sequences "$N_SEQUENCES" \
+	--max-seq-len "$MAX_SEQ_LEN" \
+	--training-seed "$TRAINING_SEED" \
+	--epochs "$EPOCHS" \
+	--lr "$LR" \
+	--batch-size "$BATCH_SIZE"
+
+mise run mcl-sc:analysis -- \
+	--variant "$VARIANT" \
+	--dataset-seed "$DATASET_SEED" \
+	--n-sequences "$N_SEQUENCES" \
+	--max-seq-len "$MAX_SEQ_LEN" \
+	--training-seed "$TRAINING_SEED" \
+	--epochs "$EPOCHS" \
+	--lr "$LR" \
+	--batch-size "$BATCH_SIZE"
+
+mise run mcl-sc:focus -- \
+	--variant "$VARIANT" \
+	--dataset-seed "$DATASET_SEED" \
+	--n-sequences "$N_SEQUENCES" \
+	--max-seq-len "$MAX_SEQ_LEN" \
+	--training-seed "$TRAINING_SEED" \
+	--epochs "$EPOCHS" \
+	--lr "$LR" \
+	--batch-size "$BATCH_SIZE"
+'''

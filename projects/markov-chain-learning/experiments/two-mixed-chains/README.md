@@ -11,6 +11,12 @@ This experiment is orchestrated with mise tasks and executed with uv + papermill
 
 Run from repository root.
 
+## Task Definitions
+
+- Experiment tasks for this folder live in `projects/markov-chain-learning/experiments/two-mixed-chains/tasks.mise.toml`.
+- Root task loading is configured in `slt-deep/.mise.toml` via `task_config.includes`.
+- Add new experiment-specific tasks in this local `tasks.mise.toml` file, not in the root mise file.
+
 ### Inspect available tasks
 
 ```bash
@@ -20,31 +26,31 @@ mise tasks
 ### Smoke run (single regime, full model)
 
 ```bash
-mise run mt-mcl:pipeline -- --regime single --variant full --epochs 5
+mise run mcl-2mc:pipeline -- --regime single --variant full --epochs 5
 ```
 
 ### One training notebook
 
 ```bash
-mise run mt-mcl:training -- --regime single --variant no_token --epochs 25
+mise run mcl-2mc:training -- --regime single --variant no_token --epochs 25
 ```
 
 ### One analysis notebook
 
 ```bash
-mise run mt-mcl:analysis -- --regime single --variant full
+mise run mcl-2mc:analysis -- --regime single --variant full
 ```
 
 ### Full matrix
 
 ```bash
-mise run mt-mcl:matrix
+mise run mcl-2mc:matrix
 ```
 
 ### Restricted matrix
 
 ```bash
-mise run mt-mcl:matrix -- --regimes single,two_far --variants full,no_pos --epochs 20
+mise run mcl-2mc:matrix -- --regimes single,two_far --variants full,no_pos --epochs 20
 ```
 
 ## Task Arguments
