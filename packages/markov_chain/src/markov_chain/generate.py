@@ -80,39 +80,3 @@ def sample_sequences(
         sequences[:, t] = current
 
     return sequences
-
-
-def generate_sequences(
-    T,
-    n: int,
-    seq_len: int,
-    seed: int | None = None,
-):
-    """Generate sequences from a Markov chain with a uniform prior over non-absorbing states.
-
-    Identifies absorbing states (T[i, i] == 1) automatically and starts each
-    sequence uniformly at random from the remaining interior states.
-
-    Args:
-        T: Row-stochastic transition matrix, shape (n_states, n_states).
-           Accepts either a numpy array or a torch Tensor.
-        n: Number of independent sequences.
-        seq_len: Length of each sequence.
-        seed: Optional integer seed for reproducibility.
-
-    Returns:
-        sequences: torch.LongTensor of shape (n, seq_len).
-    """
-    import torch
-
-    T_np = T.numpy() if isinstance(T, torch.Tensor) else np.asarray(T, dtype=float)
-    n_states = T_np.shape[0]
-
-    interior = np.array([i for i in range(n_states) if T_np[i, i] < 1.0])
-    if len(interior) == 0:
-        raise ValueError("All states are absorbing — cannot draw a valid prior.")
-    prior = np.zeros(n_states)
-    prior[interior] = 1.0 / len(interior)
-
-    seqs = sample_sequences(T_np, n, seq_len, prior=prior, rng=seed)
-    return torch.from_numpy(seqs).long()

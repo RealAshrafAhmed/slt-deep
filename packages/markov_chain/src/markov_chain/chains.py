@@ -10,37 +10,56 @@ import numpy as np
 
 def sample_transition_matrix(
     n_states: int,
-    alpha: float,
+    alpha: np.ndarray,
     n: int = 1,
     rng: np.random.Generator | int | None = None,
 ) -> np.ndarray:
-    """Sample a random N×N row-stochastic transition matrix.
+    """Sample ``n`` random N×N row-stochastic transition matrices.
 
-    Each row is drawn i.i.d. from the symmetric Dirichlet distribution
-    ``Dirichlet(alpha, alpha, ..., alpha)`` with ``n_states`` components.
+    Every row of every sampled matrix is drawn i.i.d. from the same Dirichlet
+    distribution parameterised by ``alpha``.
 
-    The concentration parameter ``alpha`` controls the shape of each row:
+    ``alpha`` must be a 1-D array of shape ``(n_states,)``.  For a symmetric
+    Dirichlet pass ``np.full(n_states, c)``; for an asymmetric one targeted at
+    a desired limiting distribution **π** pass ``c * π`` for any ``c > 0``.
 
-    * **alpha → 0** : rows become one-hot (chain stays in one state or teleports)
-    * **alpha = 1**  : rows are uniform on the probability simplex (Jeffreys prior)
-    * **alpha → ∞** : rows converge to the uniform distribution (1/N, ..., 1/N)
+    **Choosing alpha to target a limiting distribution π:**
+    Because every row shares the same mean, the expected transition matrix is
+    rank-1 with each row equal to ``alpha / alpha.sum()``.  Its unique
+    stationary distribution is therefore ``alpha / alpha.sum()``.  To sample
+    chains whose stationary distribution concentrates near a desired **π**,
+    set ``alpha = c * π`` for any ``c > 0``.  The scalar ``c`` (total
+    concentration) controls sharpness: larger ``c`` pulls each sampled row
+    closer to **π**, while smaller ``c`` adds more row-to-row noise.
 
     Args:
-        n: Number of transition matrices to generate
         n_states: Number of states N ≥ 2.
-        alpha: Dirichlet concentration parameter.  Must be > 0.
+        alpha: Dirichlet concentration.  1-D array of shape ``(n_states,)``.
+            All entries must be > 0.  For a symmetric Dirichlet use
+            ``np.full(n_states, c)``.
+        n: Number of independent transition matrices to generate.
         rng: Reproducibility seed.  Accepts ``int``, ``np.random.Generator``,
-             or ``None`` (uses the global numpy RNG).
+            or ``None`` (uses the global numpy RNG).
 
     Returns:
-        T: float64 array of shape (n_states, n_states), rows sum to 1.
+        T: float64 array of shape ``(n_states, n_states)`` when ``n == 1``,
+           or ``(n, n_states, n_states)`` when ``n > 1``.  Rows sum to 1.
     """
     if n_states < 2:
         raise ValueError(f"n_states must be >= 2, got {n_states=}")
-    if alpha <= 0:
-        raise ValueError(f"alpha must be > 0, got {alpha=}")
+    if alpha.ndim != 1 or alpha.shape != (n_states,):
+        raise ValueError(
+            f"alpha must be a 1-D array of shape ({n_states},), got shape {alpha.shape}"
+        )
+    if np.any(alpha <= 0):
+        raise ValueError("alpha values must be > 0")
     rng = np.random.default_rng(rng)
-    result = rng.dirichlet(np.full(n_states, alpha), size=(n, n_states))
+
+    result = np.empty((n, n_states, n_states), dtype=float)
+    for k in range(n):
+        for i in range(n_states):
+            result[k, i] = rng.dirichlet(alpha)
+
     return result.squeeze(0) if n == 1 else result
 
 

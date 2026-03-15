@@ -20,31 +20,31 @@ mise tasks
 ### Smoke run (single regime, full model)
 
 ```bash
-mise run mcl:pipeline -- --regime single --variant full --epochs 5
+mise run mt-mcl:pipeline -- --regime single --variant full --epochs 5
 ```
 
 ### One training notebook
 
 ```bash
-mise run mcl:training -- --regime single --variant no_token --epochs 25
+mise run mt-mcl:training -- --regime single --variant no_token --epochs 25
 ```
 
 ### One analysis notebook
 
 ```bash
-mise run mcl:analysis -- --regime single --variant full
+mise run mt-mcl:analysis -- --regime single --variant full
 ```
 
 ### Full matrix
 
 ```bash
-mise run mcl:matrix
+mise run mt-mcl:matrix
 ```
 
 ### Restricted matrix
 
 ```bash
-mise run mcl:matrix -- --regimes single,two_far --variants full,no_pos --epochs 20
+mise run mt-mcl:matrix -- --regimes single,two_far --variants full,no_pos --epochs 20
 ```
 
 ## Task Arguments
