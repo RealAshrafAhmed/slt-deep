@@ -5,6 +5,7 @@ usage = '''
 flag "--dataset-seed <seed>" help="Dataset seed" env="DATASET_SEED" default="0"
 flag "--n-sequences <n>" help="Number of generated sequences" env="N_SEQUENCES" default="10000"
 flag "--max-seq-len <n>" help="Maximum sequence length" env="MAX_SEQ_LEN" default="32"
+flag "--log-output <enabled>" help="Stream notebook stdout to terminal (true/false)" env="PAPERMILL_LOG_OUTPUT" default="true"
 '''
 run = '''
 set -euo pipefail
@@ -12,19 +13,33 @@ set -euo pipefail
 DATASET_SEED="${usage_dataset_seed?}"
 N_SEQUENCES="${usage_n_sequences?}"
 MAX_SEQ_LEN="${usage_max_seq_len?}"
+PAPERMILL_LOG_OUTPUT="${usage_log_output?}"
 
 DATA_DIR="$(pwd)/data/single"
 EXEC_DIR="$DATA_DIR/executed"
 mkdir -p "$EXEC_DIR"
 
-uv run papermill \
-	notebooks/02_dataset.ipynb \
-	"$EXEC_DIR/02_dataset.ipynb" \
-	-p DATA_DIR "$DATA_DIR" \
-	-p DGP_REGIME "single" \
-	-p SEED "$DATASET_SEED" \
-	-p N_SEQUENCES "$N_SEQUENCES" \
-	-p MAX_SEQ_LEN "$MAX_SEQ_LEN"
+PAPERMILL_LOG_OUTPUT_NORMALIZED="$(printf '%s' "$PAPERMILL_LOG_OUTPUT" | tr '[:upper:]' '[:lower:]')"
+if [[ "$PAPERMILL_LOG_OUTPUT_NORMALIZED" == "1" || "$PAPERMILL_LOG_OUTPUT_NORMALIZED" == "true" || "$PAPERMILL_LOG_OUTPUT_NORMALIZED" == "yes" || "$PAPERMILL_LOG_OUTPUT_NORMALIZED" == "y" || "$PAPERMILL_LOG_OUTPUT_NORMALIZED" == "on" ]]; then
+	uv run papermill \
+		--log-output \
+		notebooks/02_dataset.ipynb \
+		"$EXEC_DIR/02_dataset.ipynb" \
+		-p DATA_DIR "$DATA_DIR" \
+		-p DGP_REGIME "single" \
+		-p SEED "$DATASET_SEED" \
+		-p N_SEQUENCES "$N_SEQUENCES" \
+		-p MAX_SEQ_LEN "$MAX_SEQ_LEN"
+else
+	uv run papermill \
+		notebooks/02_dataset.ipynb \
+		"$EXEC_DIR/02_dataset.ipynb" \
+		-p DATA_DIR "$DATA_DIR" \
+		-p DGP_REGIME "single" \
+		-p SEED "$DATASET_SEED" \
+		-p N_SEQUENCES "$N_SEQUENCES" \
+		-p MAX_SEQ_LEN "$MAX_SEQ_LEN"
+fi
 '''
 
 ["mcl-sc:training"]

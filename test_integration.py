@@ -50,7 +50,10 @@ def test_ecosystem():
         bayes_net = BayesianNet(model1)
 
         # Quick sampling test (just 5 samples)
-        samples = bayes_net.sample(x, y, num_samples=5, backend="sgld", lr=0.01)
+        from torch_bdn.sampling import SGLD, Sampler
+
+        sampler = Sampler(bayes_net, x, y)
+        samples = sampler.sample(SGLD(lr=0.01, n_warmup=5), n_samples=5)
 
         print("✓ torch_bdn: Bayesian inference works")
         print(f"  Generated {len(samples['parameters'])} posterior samples")

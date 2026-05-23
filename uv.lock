@@ -16,6 +16,7 @@ resolution-markers = [
 [manifest]
 members = [
     "markov-chain",
+    "pytorch-models",
     "slt-deep",
     "torch-bdn",
     "torch-dln",
@@ -1796,6 +1797,18 @@ wheels = [
 ]
 
 [[package]]
+name = "loky"
+version = "3.5.6"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cloudpickle" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/76/61/690a4503ede61d36cc7fa2d5fa11fe02d94f030bd82155cd8935b2694580/loky-3.5.6.tar.gz", hash = "sha256:d96935ed689aa53eeb7b329769544950fa10a52706968f5d0af3d9c33a761e77", size = 102275, upload-time = "2025-08-27T09:53:52.4Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ce/80/7f1f1bf8c2d5dfd8e9c0e1191aa355ff8b80b5619f84d6dcc2703fa7fd5a/loky-3.5.6-py3-none-any.whl", hash = "sha256:6d5300ac68cbd5084e89a6a0a187785d6a79950d461c80223d2c9a41d672b3d4", size = 56515, upload-time = "2025-08-27T09:53:51.145Z" },
+]
+
+[[package]]
 name = "markdown-it-py"
 version = "4.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3256,6 +3269,17 @@ wheels = [
 ]
 
 [[package]]
+name = "pytorch-models"
+version = "0.1.0"
+source = { editable = "projects/markov-chain-learning/packages/pytorch_models" }
+dependencies = [
+    { name = "torch" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "torch", specifier = ">=2.0.0" }]
+
+[[package]]
 name = "pywinpty"
 version = "3.0.3"
 source = { registry = "https://pypi.org/simple" }
@@ -3967,6 +3991,7 @@ name = "torch-bdn"
 version = "0.1.0"
 source = { editable = "packages/torch_bdn" }
 dependencies = [
+    { name = "loky" },
     { name = "numpy" },
     { name = "torch" },
     { name = "tqdm" },
@@ -3974,6 +3999,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "loky", specifier = ">=3.4.0" },
     { name = "numpy", specifier = ">=1.24.0" },
     { name = "torch", specifier = ">=2.0.0" },
     { name = "tqdm", specifier = ">=4.65.0" },

@@ -85,9 +85,9 @@ def test_sampler_api_compatibility():
 
         # Try a very small sampling run (will fail if torch not available for full SGLD)
         try:
-            results = sampler.sample(
-                num_samples=2, backend="sgld", warmup=2, batch_size=16
-            )
+            from torch_bdn.sampling import SGLD
+
+            results = sampler.sample(SGLD(n_warmup=2, batch_size=16), n_samples=2)
             print(f"✓ Sampling completed! Got {len(results['parameters'])} samples")
             print(f"✓ Final sample shape: {results['parameters'][0].shape}")
         except Exception as e:

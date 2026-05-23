@@ -1,13 +1,37 @@
 """
 torch_bdn: Bayesian Deep Networks for PyTorch
 
-Provides PyMC-style Bayesian inference for PyTorch models with pluggable
-MCMC sampling backends.
+Provides typed MCMC sampling for PyTorch models.
 """
 
 from .bn.bayesian_net import BayesianNet
-from .sampling import list_backends, register_backend
+from .sampling import (
+    HMC,
+    NUTS,
+    SGHMC,
+    SGLD,
+    ChainResult,
+    InitStrategy,
+    MultiChainResult,
+    Perturb,
+    Prior,
+    Sampler,
+    SamplerConfig,
+)
 
 __version__ = "0.1.0"
 
-__all__ = ["BayesianNet", "list_backends", "register_backend"]
+__all__ = [
+    "HMC",
+    "NUTS",
+    "SGHMC",
+    "SGLD",
+    "BayesianNet",
+    "ChainResult",
+    "InitStrategy",
+    "MultiChainResult",
+    "Perturb",
+    "Prior",
+    "Sampler",
+    "SamplerConfig",
+]

@@ -1,0 +1,126 @@
+# Hypothesis: Mass Matrix Initialization for Singular Models
+# Date: 2026-05-21
+
+## Context
+
+We are sampling from the posterior of a MarkovTransformer (~910 params) at β=1
+using NUTS. The model is singular at the MLE: the Hessian has many zero
+eigenvalues (degenerate directions). We observe ACF not decaying until lag ~1250,
+giving ESS ≈ 2 from 5000 samples.
+
+Currently we pass `M_posterior = V diag(max(0,λ_H) + 1/σ²) Vᵀ` as the initial
+mass matrix. This is the regularized Hessian (precision), but Stan's convention
+expects M = covariance. The adaptation overwrites it with empirical covariance
+from ~1700 warmup draws in the final window — barely enough for 910 dims.
+
+## Hypotheses
+
+### H1: Removing the Hessian initialization and increasing warmup
+
+**Proposal**: Pass `mass_matrix=None` (identity) and increase warmup to 10000.
+This gives the final adaptation window ~3400 draws (3.7:1 ratio with d=910).
+Let Stan's algorithm discover the covariance from scratch without a misleading
+precision-as-covariance initialization.
+
+**Prediction**: This will NOT substantially improve ACF. Reason: the fundamental
+problem is not the initialization or the number of warmup draws. The problem is
+that in degenerate directions, the posterior is not approximately Gaussian — it
+has flat valleys, ridges, and possibly curved manifolds. A single covariance
+matrix (linear approximation) cannot capture this geometry regardless of how
+well it is estimated. The chain will still struggle to traverse these non-Gaussian
+structures even with a perfect empirical covariance.
+
+**Experiment**:
+```python
+result = Sampler(bn, x_data, y_data).sample(
+    config=NUTS(
+        n_warmup=10000,
+        step_size=0.01,
+        max_tree_depth=7,
+        target_accept=0.69,
+        mass_matrix=None,  # Start from identity, let adaptation discover M
+        adapt_mass_matrix=True,
+    ),
+    n_samples=5000,
+    n_chains=1,
+    init_strategy=Perturb(scale=0.1),
+)
+```
+
+---
+
+### H2: Passing the regularized Hessian inverse as initial M
+
+**Proposal**: Compute `M_posterior_inv = V diag(1/m_eig) Vᵀ` where
+`m_eig = max(0, λ_H) + 1/σ²`, and pass this as the initial mass matrix.
+This is coherent with Stan's M = covariance convention and gives the
+adaptation a head start.
+
+**Prediction**: This will also NOT substantially improve ACF in degenerate
+directions. The reason is more subtle:
+
+1. In degenerate directions (λ_H ≈ 0): the eigenvalue of M_posterior_inv is
+   1/(0 + 1/σ²) = σ² = 100. This says "the posterior is wide like the prior
+   in these directions." But this is a fiction — it's just the prior variance,
+   not learned geometry. The actual posterior in degenerate directions has
+   complex non-Gaussian structure (flat valleys, curved manifolds) that cannot
+   be summarized by a single variance.
+
+2. Dividing by near-zero eigenvalues: Even with the 1/σ² regularization, we're
+   essentially saying "I don't know the scale in these directions, so use the
+   prior." But the prior scale (σ=10) is arbitrary and likely wrong for the
+   actual posterior width in degenerate directions.
+
+3. Non-smooth curvature: In regular geometry, the Hessian varies smoothly and
+   a local quadratic approximation works. In singular geometry, the curvature
+   is not smooth — it can change abruptly as you move along degenerate
+   directions. A mass matrix estimated at one point becomes invalid a short
+   distance away. This is fundamentally why local adaptation fails for
+   singular models.
+
+**Experiment**:
+```python
+# Compute M as approximate posterior covariance (Hessian inverse + prior)
+m_eig = eigvals_clamped + prior_precision  # same as before
+M_posterior_inv = eigvecs @ torch.diag(1.0 / m_eig) @ eigvecs.T
+
+result = Sampler(bn, x_data, y_data).sample(
+    config=NUTS(
+        n_warmup=5000,
+        step_size=0.01,
+        max_tree_depth=7,
+        target_accept=0.69,
+        mass_matrix=M_posterior_inv,  # Covariance convention, coherent with adaptation
+        adapt_mass_matrix=True,
+    ),
+    n_samples=5000,
+    n_chains=1,
+    init_strategy=Perturb(scale=0.1),
+)
+```
+
+---
+
+## Why both will likely fail
+
+The core issue is that **no fixed mass matrix can make NUTS efficient in
+singular geometry**. The mass matrix is a global linear preconditioner — it
+rotates and rescales coordinates. But singular posteriors have:
+
+- Non-constant curvature along degenerate manifolds
+- Valleys that curve in parameter space
+- Phase transitions between qualitatively different regions
+
+These require either:
+- Position-dependent preconditioning (Riemannian HMC — expensive)
+- Non-local moves (parallel tempering swaps — what we're also trying)
+- Reparameterization that makes the geometry more regular
+
+The mass matrix experiments are still worth running to confirm this hypothesis
+and to establish that the ACF problem is intrinsic to the singular geometry,
+not an artifact of bad initialization or insufficient warmup.
+
+## Success criteria
+
+- If ACF@50 median drops below 0.3: hypothesis falsified, the fix worked
+- If ACF@50 median remains above 0.5: hypothesis confirmed, need PT or other approaches

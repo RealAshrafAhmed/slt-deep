@@ -69,6 +69,11 @@ def sgld(
     noise_scale: float | None = None,
     n_burnin: int = 1000,
     thin: int = 1,
+    diff_log_likelihood_fn: Callable[
+        [torch.Tensor, torch.Tensor, torch.Tensor], torch.Tensor
+    ]
+    | None = None,
+    preconditioner: torch.Tensor | None = None,
     **kwargs,
 ) -> dict[str, Any]:
     """
@@ -107,8 +112,54 @@ def sgld(
     # Type checker assistance: noise_scale is guaranteed to be float here
     assert noise_scale is not None  # For type checker
 
-    # Initialize parameter tensor (requires gradient)
-    params = init_params.clone().detach().requires_grad_(True)
+    device = init_params.device
+
+    # ── Build preconditioner from Hessian ────────────────────────────────
+    # Preconditioned SGLD update:
+    #   θ ← θ + (ε/2) M g  +  sqrt(ε M) ξ,   ξ ~ N(0, I)
+    #
+    # For a (possibly degenerate) Hessian H = V Λ V^T we define the
+    # preconditioner eigenvalues as:
+    #
+    #   m_i = 1/λ_i   if λ_i > δ     (pseudoinverse on the column space)
+    #   m_i = 1        if λ_i ≤ δ     (identity on the null space)
+    #
+    # where δ is a threshold separating "informative" from "degenerate"
+    # eigenvalues.  This is the pseudoinverse H⁺ on directions that carry
+    # curvature, falling back to the identity elsewhere — mathematically
+    # well-defined even when H is singular.
+    if preconditioner is not None:
+        H = preconditioner.float().to("cpu")  # eigh needs CPU
+        eigvals_h, eigvecs_h = torch.linalg.eigh(H)
+
+        lambda_max = float(eigvals_h.max().clamp(min=1e-8))
+        # Threshold: eigenvalues below δ are "degenerate"
+        delta = lambda_max * 1e-3
+
+        # Pseudoinverse + identity fallback
+        informative = eigvals_h > delta
+        m_eig = torch.ones_like(eigvals_h)  # default: identity
+        m_eig[informative] = 1.0 / eigvals_h[informative]  # pseudoinverse
+
+        # Normalise so median(m) ≈ 1 — keeps lr interpretation stable
+        m_median = m_eig.median()
+        if m_median > 0:
+            m_eig = m_eig / m_median
+
+        n_degen = int((~informative).sum())
+        n_total = eigvals_h.numel()
+
+        _V = eigvecs_h.to(device)  # (D, D)
+        _m = m_eig.to(device)  # (D,)
+        _sqrt_m = m_eig.sqrt().to(device)
+        _preconditioned = True
+    else:
+        _preconditioned = False
+        n_degen = 0
+        n_total = init_params.numel()
+
+    # Initialize parameter tensor
+    params = init_params.clone().detach()
 
     samples = []
     logp_vals = []
@@ -117,13 +168,15 @@ def sgld(
     n_data = x_data.shape[0]
     n_batches_per_epoch = (n_data + batch_size - 1) // batch_size  # Ceiling division
 
+    indices = torch.randperm(n_data, device=device)
+
     for step in range(total_steps):
         # Determine which batch within epoch we're in
         batch_idx = step % n_batches_per_epoch
 
         # Shuffle data indices for each new epoch (when batch_idx == 0)
         if batch_idx == 0:
-            indices = torch.randperm(n_data)
+            indices = torch.randperm(n_data, device=device)
 
         # Get current mini-batch
         start_idx = batch_idx * batch_size
@@ -132,23 +185,24 @@ def sgld(
         x_batch = x_data[batch_indices]
         y_batch = y_data[batch_indices]
 
-        # Zero gradients
-        if params.grad is not None:
-            params.grad.zero_()
+        # Fresh param tensor with grad tracking
+        p = params.clone().detach().requires_grad_(True)
 
-        # Set current parameters in the model
-        set_params_fn(params)
-
-        # Compute log likelihood using model at current parameters
-        log_likelihood = log_likelihood_fn(x_batch, y_batch)
+        # Compute log likelihood — use differentiable path when available
+        if diff_log_likelihood_fn is not None:
+            log_likelihood = diff_log_likelihood_fn(p, x_batch, y_batch)
+        else:
+            # Legacy path (gradient only flows through the prior)
+            set_params_fn(p)
+            log_likelihood = log_likelihood_fn(x_batch, y_batch)
 
         # Compute log prior directly from params tensor (preserves gradient connection)
-        log_prior = log_prior_fn(params)
+        log_prior = log_prior_fn(p)
 
         # Compute gradients with respect to the params tensor directly
         likelihood_grad = torch.autograd.grad(
             outputs=log_likelihood,
-            inputs=params,
+            inputs=p,
             retain_graph=True,
             create_graph=False,
             allow_unused=True,
@@ -156,7 +210,7 @@ def sgld(
 
         prior_grad = torch.autograd.grad(
             outputs=log_prior,
-            inputs=params,
+            inputs=p,
             retain_graph=False,
             create_graph=False,
             allow_unused=True,
@@ -164,9 +218,9 @@ def sgld(
 
         # Handle case where some parameters might not be used (gradients could be None)
         if likelihood_grad is None:
-            likelihood_grad = torch.zeros_like(params)
+            likelihood_grad = torch.zeros_like(p)
         if prior_grad is None:
-            prior_grad = torch.zeros_like(params)
+            prior_grad = torch.zeros_like(p)
 
         # Scale likelihood gradient by dataset size / batch size for unbiased estimate
         likelihood_grad = likelihood_grad * (n_data / len(x_batch))
@@ -182,18 +236,26 @@ def sgld(
             prior_grad = prior_grad * (max_grad_norm / grad_norm)
 
         # Total log probability for recording (approximate with current batch)
-        total_logp = log_likelihood + log_prior
+        total_logp = (log_likelihood + log_prior).detach()
 
-        # SGLD update: θ_new = θ + (lr/2) * ∇log p(θ) + η
+        # SGLD update (optionally preconditioned):
+        #   θ ← θ + (ε/2) M g + sqrt(ε M) ξ        (preconditioned)
+        #   θ ← θ + (ε/2) g   + noise_scale ξ      (isotropic)
         with torch.no_grad():
-            # Gradient step (stochastic gradient from mini-batch)
-            gradient_step = (lr / 2) * (likelihood_grad + prior_grad)
+            if _preconditioned:
+                # M g = V diag(m) V^T g
+                g_eig = _V.T @ total_grad  # project to eigenbasis
+                gradient_step = (lr / 2) * (_V @ (_m * g_eig))
 
-            # Noise step
-            noise_step = noise_scale * torch.randn_like(params)
+                # sqrt(ε M) ξ = sqrt(ε) V diag(sqrt(m)) ξ_eig
+                xi = torch.randn(total_grad.shape[0], device=device)
+                noise_step = (lr**0.5) * (_V @ (_sqrt_m * xi))
+            else:
+                gradient_step = (lr / 2) * total_grad
+                noise_step = noise_scale * torch.randn_like(params)
 
             # Update parameters
-            params += gradient_step + noise_step
+            params = params + gradient_step + noise_step
 
             # Clip parameters to prevent extreme values
             params.clamp_(-50.0, 50.0)  # Prevent parameters from exploding
@@ -217,5 +279,8 @@ def sgld(
             "n_burnin": n_burnin,
             "thin": thin,
             "total_steps": total_steps,
+            "preconditioned": _preconditioned,
+            "n_degenerate_directions": n_degen,
+            "n_total_directions": n_total,
         },
     }

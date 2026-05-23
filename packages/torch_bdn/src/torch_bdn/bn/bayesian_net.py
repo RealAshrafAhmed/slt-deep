@@ -11,6 +11,8 @@ from typing import overload
 
 import torch
 import torch.nn as nn
+from torch.func import functional_call, hessian
+from torch.nn.utils import parameters_to_vector, vector_to_parameters
 
 
 class LikelihoodType(Enum):
@@ -49,6 +51,91 @@ class LikelihoodType(Enum):
         )
 
 
+def unflatten(named_params, params_vec):
+    param_dict = dict(named_params)
+    param_names = list(param_dict.keys())
+    param_shapes = [p.shape for p in param_dict.values()]
+    param_numels = [p.numel() for p in param_dict.values()]
+
+    out, offset = {}, 0
+    for name, shape, n in zip(param_names, param_shapes, param_numels):
+        out[name] = params_vec[offset : offset + n].view(shape)
+        offset += n
+    return out
+
+
+def make_fast_unflatten(model: nn.Module):
+    """Cache parameter metadata for fast repeated unflattening."""
+    names = []
+    shapes = []
+    numels = []
+    offsets = [0]
+    for name, p in model.named_parameters():
+        names.append(name)
+        shapes.append(p.shape)
+        numels.append(p.numel())
+        offsets.append(offsets[-1] + p.numel())
+
+    def fast_unflatten(params_vec):
+        return {
+            n: params_vec[offsets[i] : offsets[i + 1]].view(s)
+            for i, (n, s) in enumerate(zip(names, shapes))
+        }
+
+    return fast_unflatten
+
+
+def mean_loss_factory(model, loss_fn):
+    def fun(params_vec, x, y):
+        params = unflatten(named_params=model.named_parameters(), params_vec=params_vec)
+        pred = functional_call(model, params, x)
+        return loss_fn(pred, y)  # make sure this uses mean reduction, not sum
+
+    return fun
+
+
+def approx_hessian(
+    model, loss_fn, x: torch.Tensor, y: torch.Tensor, chunk_size=32
+) -> torch.Tensor:
+    """
+    Compute Hessian of negative log-posterior with respect to model parameters.
+
+    This is useful for second-order MCMC methods like Riemannian HMC or Laplace approximation.
+
+    Args:
+        model: PyTorch model
+        loss_fn: Loss function
+        x: Input data tensor
+        y: Target data tensor
+        chunk_size: Size of data chunks for memory-efficient computation
+
+    Returns:
+        Hessian matrix (tensor of shape [num_params, num_params])
+    """
+
+    params_vec = parameters_to_vector(model.parameters()).detach()
+
+    if chunk_size is not None and x.shape[0] > chunk_size:
+        # Compute Hessian in chunks to save memory
+        hessians = []
+        for i in range(0, x.shape[0], chunk_size):
+            x_chunk = x[i : i + chunk_size]
+            y_chunk = y[i : i + chunk_size]
+
+            hessian_fn = hessian(mean_loss_factory(model=model, loss_fn=loss_fn))
+            h_chunk = hessian_fn(params_vec, x_chunk, y_chunk)
+            hessians.append(h_chunk)
+
+        result = torch.stack(hessians).mean(dim=0)
+    else:
+        # Compute on full data
+        hessian_fn = hessian(mean_loss_factory(model=model, loss_fn=loss_fn))
+        result = hessian_fn(params_vec, x, y)
+
+    assert isinstance(result, torch.Tensor)
+    return result
+
+
 class BayesianNet:
     """
     Bayesian wrapper for PyTorch models.
@@ -82,6 +169,7 @@ class BayesianNet:
         loss_fn: nn.Module,
         prior_logp: Callable[[torch.Tensor], torch.Tensor],
         temperature: float = 1.0,
+        compile: bool = False,
     ):
         """
         Initialize Bayesian network.
@@ -91,11 +179,36 @@ class BayesianNet:
             loss_fn: Loss function (determines likelihood type)
             prior_logp: Callable that takes flattened parameter tensor and returns log probability
             temperature: Temperature for tempered posteriors (1.0 = standard)
+            compile: If True, use torch.compile on the forward pass for faster
+                     repeated evaluations (e.g. during MCMC sampling).
         """
         self.model = model
         self.loss_fn = loss_fn
         self.prior_logp = prior_logp
         self.temperature = temperature
+        self._fast_unflatten = make_fast_unflatten(model)
+
+        # Compile the forward+loss kernel for repeated calls (MCMC hot path)
+        def _forward_and_loss(params_dict, x, y):
+            y_pred = functional_call(model, params_dict, x)
+            return -loss_fn(y_pred, y)
+
+        if compile:
+            self._forward_and_loss = torch.compile(_forward_and_loss)
+        else:
+            self._forward_and_loss = _forward_and_loss
+
+    # ── device helpers ────────────────────────────────────────────────────
+
+    @property
+    def device(self) -> torch.device:
+        """Device of the first model parameter (all should be on same device)."""
+        return next(self.model.parameters()).device
+
+    def to(self, device: torch.device | str) -> "BayesianNet":
+        """Move model to *device* and return self for chaining."""
+        self.model = self.model.to(device)
+        return self
 
     def logp(self, x_data: torch.Tensor, y_data: torch.Tensor) -> torch.Tensor:
         """
@@ -132,6 +245,20 @@ class BayesianNet:
         # Convert loss to log-likelihood (negative log-likelihood)
         return -loss_value
 
+    def log_likelihood_from_flat(
+        self, flat_params: torch.Tensor, x: torch.Tensor, y: torch.Tensor
+    ) -> torch.Tensor:
+        """
+        Differentiable log-likelihood that preserves the autograd graph
+        from *flat_params* through to the returned scalar.
+
+        Uses ``torch.func.functional_call`` so that gradients flow
+        back through ``flat_params`` — unlike ``set_parameters`` followed
+        by ``log_likelihood``, which severs the graph.
+        """
+        params_dict = self._fast_unflatten(flat_params)
+        return self._forward_and_loss(params_dict, x, y)
+
     def log_prior_from_params(self, flat_params: torch.Tensor) -> torch.Tensor:
         """
         Compute log-prior: log p(θ) from given parameter tensor.
@@ -160,19 +287,13 @@ class BayesianNet:
         """
         Set model parameters from flattened parameter vector.
 
-        This is similar to how optimizers update parameters in PyTorch,
-        or how PyMC updates model parameters during sampling.
+        Uses ``torch.nn.utils.vector_to_parameters`` for a single
+        vectorised C++ call instead of a Python-level loop.
 
         Args:
             flattened_params: Flattened tensor containing all model parameters
         """
-        param_idx = 0
-        for param in self.model.parameters():
-            param_size = param.numel()
-            param.data = flattened_params[param_idx : param_idx + param_size].view(
-                param.shape
-            )
-            param_idx += param_size
+        vector_to_parameters(flattened_params, self.model.parameters())
 
     @overload
     def get_parameters(self, flat: bool = True) -> torch.Tensor: ...

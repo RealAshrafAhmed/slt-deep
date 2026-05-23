@@ -1,0 +1,49 @@
+{
+  "experiment": "04_no_hessian",
+  "hypothesis": "H1: singular geometry defeats any fixed mass matrix",
+  "config": {
+    "d": 910,
+    "n_warmup": 10000,
+    "n_samples": 10000,
+    "max_tree_depth": 7,
+    "sigma_prior": 10.0,
+    "dgp_regime": "single"
+  },
+  "spectral": {
+    "n_hessian_positive_modes": 480,
+    "n_hessian_negative_modes": 430,
+    "eig_H_range": [
+      -0.02714386023581028,
+      3.8509907722473145
+    ],
+    "eig_Minv_range": [
+      0.01663852110505104,
+      636008.8125
+    ],
+    "eig_HM_range": [
+      -0.0004885965026915073,
+      1.893654704093933
+    ],
+    "eig_Htrunc_positive_modes": 468,
+    "eig_HtruncM_near_one": 0
+  },
+  "acf": {
+    "lag_10_median": 0.9936700463294983,
+    "lag_50_median": 0.9684661030769348,
+    "lag_200_median": 0.8786036372184753,
+    "lag_50_nondegen_median": 0.9667297601699829,
+    "lag_50_degen_median": 0.9688613414764404
+  },
+  "ess": {
+    "all_min": 2.864849328994751,
+    "all_median": 4.829048156738281,
+    "all_max": 29.45493507385254,
+    "nondegen_min": 3.0543856620788574,
+    "nondegen_median": 5.047862529754639,
+    "nondegen_max": 16.683578491210938,
+    "degen_min": 2.864849328994751,
+    "degen_median": 4.798096179962158,
+    "degen_max": 29.45493507385254
+  },
+  "verdict": "confirmed"
+}

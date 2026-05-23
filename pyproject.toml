@@ -62,13 +62,24 @@ markov-chain = { workspace = true, editable = true }
 ]  # papermill output notebooks are artifacts, not source
 "**/notebooks/**" = [
     "E402",
+    "E741",
     "F401",
     "F403",
+    "F821",
+    "F841",
+    "N802",
+    "N803",
     "N806",
     "N812",
+    "N816",
+    "B007",
     "C408",
     "NPY002",
+    "PD011",
     "RUF001",
+    "RUF002",
+    "RUF003",
+    "SIM108",
 ]  # notebook experiments use interactive patterns and math shorthand
 "**/tests/**" = ["N806"]  # T is conventional math notation for transition matrices
 "packages/markov_chain/src/markov_chain/chains.py" = [
@@ -80,6 +91,28 @@ markov-chain = { workspace = true, editable = true }
     "N803",
     "N806",
 ]  # parameter naming mirrors transition-matrix notation
+"packages/torch_bdn/src/torch_bdn/sampling/**" = [
+    "B007",
+    "C408",
+    "E741",
+    "F841",
+    "N802",
+    "N803",
+    "N806",
+    "RUF001",
+    "RUF002",
+    "RUF003",
+    "SIM108",
+]  # physics/math notation throughout: grad_U, M_inv, α, ×, etc.
+"packages/torch_bdn/src/torch_bdn/sampling/backends/sgld.py" = [
+    "N806",
+    "RUF002",
+    "RUF003",
+]  # H is standard notation for Hessian/preconditioner
+"projects/markov-chain-learning/packages/pytorch_models/markov_transformer.py" = [
+    "N806",
+    "RUF003",
+]  # H, D are standard transformer notation; × in comments is intentional
 
 [tool.ruff.format]
 quote-style = "double"
