@@ -3727,6 +3727,9 @@ dev = [
 ]
 
 [package.dev-dependencies]
+dev = [
+    { name = "ipykernel" },
+]
 publishing = [
     { name = "jupyterlab-quarto" },
     { name = "nbconvert" },
@@ -3765,6 +3768,7 @@ requires-dist = [
 provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
+dev = [{ name = "ipykernel", specifier = ">=7.2.0" }]
 publishing = [
     { name = "jupyterlab-quarto", specifier = ">=0.3.4" },
     { name = "nbconvert", specifier = ">=7.17.0" },

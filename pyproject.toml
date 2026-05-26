@@ -37,6 +37,9 @@ dev = [
 ]
 
 [dependency-groups]
+dev = [
+    "ipykernel>=7.2.0",
+]
 publishing = [
     "quarto-cli",
     "nbconvert>=7.17.0",

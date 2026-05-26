@@ -555,6 +555,9 @@ def nuts(
     target_accept: float = 0.80,
     adapt_mass_matrix: bool = False,
     beta: float = 1.0,
+    step_offset: int = 0,
+    n_total_expected: int | None = None,
+    chain_label: str | None = None,
     **kwargs,
 ) -> dict[str, Any]:
     """
@@ -881,8 +884,11 @@ def nuts(
             phase = "warmup" if step < n_burnin else "sample"
             maxd_str = " (hit max)" if depth >= max_tree_depth else ""
             chunk_alpha = sum(_chunk_alphas) / max(1, len(_chunk_alphas))
+            global_step = step_offset + step + 1
+            global_total = n_total_expected if n_total_expected is not None else (step_offset + total_steps)
+            chain_tag = f" {chain_label}" if chain_label else ""
             print(
-                f"  [NUTS {phase}] step {step + 1}/{total_steps}  "
+                f"  [NUTS {phase}{chain_tag}] step {global_step}/{global_total}  "
                 f"ε={eps:.2e}  depth={depth}{maxd_str}  L={n_leapfrog}  "
                 f"α={chunk_alpha:.2f}  divs={_chunk_divs}/10  "
                 f"mass={mass_type}"

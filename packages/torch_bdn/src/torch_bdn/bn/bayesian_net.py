@@ -198,6 +198,24 @@ class BayesianNet:
         else:
             self._forward_and_loss = _forward_and_loss
 
+    # ── pickle / deepcopy support (torch.compile objects aren't picklable) ─
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state.pop("_forward_and_loss", None)
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        model = self.model
+        loss_fn = self.loss_fn
+
+        def _forward_and_loss(params_dict, x, y):
+            y_pred = functional_call(model, params_dict, x)
+            return -loss_fn(y_pred, y)
+
+        self._forward_and_loss = _forward_and_loss
+
     # ── device helpers ────────────────────────────────────────────────────
 
     @property

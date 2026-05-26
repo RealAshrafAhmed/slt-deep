@@ -152,6 +152,8 @@ class Sampler:
         swap_every: int = 0,
         n_cores: int | None = None,
         betas: list[float] | None = None,
+        per_chain_mass_matrix: list[Any] | None = None,
+        per_chain_step_size: list[float] | None = None,
     ) -> MultiChainResult:
         """
         Sample from the posterior distribution.
@@ -174,6 +176,15 @@ class Sampler:
                 π_β(θ) ∝ p(D|θ)^β · p(θ) with β < 1.
                 When provided, ``swap_every`` must be > 0 and the swap
                 criterion uses the replica-exchange Metropolis rule.
+            per_chain_mass_matrix: Optional list of per-chain mass matrix
+                seeds (length ``n_chains``).  Overrides ``config.mass_matrix``
+                for each chain at warmup start.  Useful for resuming iterative
+                refinement loops (e.g. H3-1) where each chain carries its own
+                adapted M across rounds.  Only supported with multi-chain
+                swap sampling.
+            per_chain_step_size: Optional list of per-chain step-size seeds
+                (length ``n_chains``).  Same semantics as
+                ``per_chain_mass_matrix`` but for the leapfrog step size.
 
         Returns:
             :class:`MultiChainResult` containing per-chain results and
@@ -217,6 +228,23 @@ class Sampler:
                 raise ValueError(
                     "swap_every must be > 0 when using parallel tempering (betas)"
                 )
+        if per_chain_mass_matrix is not None and len(per_chain_mass_matrix) != n_chains:
+            raise ValueError(
+                f"len(per_chain_mass_matrix)={len(per_chain_mass_matrix)} "
+                f"must match n_chains={n_chains}"
+            )
+        if per_chain_step_size is not None and len(per_chain_step_size) != n_chains:
+            raise ValueError(
+                f"len(per_chain_step_size)={len(per_chain_step_size)} "
+                f"must match n_chains={n_chains}"
+            )
+        if (per_chain_mass_matrix is not None or per_chain_step_size is not None) and (
+            swap_every <= 0 or n_chains < 2
+        ):
+            raise ValueError(
+                "per_chain_mass_matrix / per_chain_step_size are only supported "
+                "with multi-chain swap sampling (swap_every > 0, n_chains >= 2)"
+            )
 
         effective_cores = _effective_cores(n_cores, n_chains)
 
@@ -238,6 +266,8 @@ class Sampler:
             swap_every,
             n_cores=effective_cores,
             betas=betas,
+            per_chain_mass_matrix=per_chain_mass_matrix,
+            per_chain_step_size=per_chain_step_size,
         )
 
     # ── internal: parallel batch execution ─────────────────────────────────
@@ -321,6 +351,9 @@ class Sampler:
         n_samples: int,
         bayes_net: BayesianNet | None = None,
         beta: float = 1.0,
+        step_offset: int = 0,
+        n_total_expected: int | None = None,
+        chain_label: str | None = None,
     ) -> dict[str, Any]:
         bn = bayes_net if bayes_net is not None else self.bayes_net
         init_params = bn.get_parameters(flat=True)
@@ -350,6 +383,9 @@ class Sampler:
                 adapt_step_size=True,
                 target_accept=config.target_accept,
                 adapt_mass_matrix=config.adapt_mass_matrix,
+                step_offset=step_offset,
+                n_total_expected=n_total_expected,
+                chain_label=chain_label,
             )
 
         if isinstance(config, HMC):
@@ -429,6 +465,8 @@ class Sampler:
         swap_every: int,
         n_cores: int = 1,
         betas: list[float] | None = None,
+        per_chain_mass_matrix: list[Any] | None = None,
+        per_chain_step_size: list[float] | None = None,
     ) -> MultiChainResult:
         """Run chains in segments, proposing DEO swaps between segments.
 
@@ -449,6 +487,10 @@ class Sampler:
         else:
             chain_betas = [1.0] * n_chains
 
+        # Each chain gets its own BayesianNet copy (independent adaptation)
+        print(f"  [PT] Initialising {n_chains} chain replicas...")
+        chain_nets = [copy.deepcopy(self.bayes_net) for _ in range(n_chains)]
+
         # Current position of each chain
         positions = [p.clone() for p in inits]
         # Accumulated samples per chain
@@ -461,44 +503,113 @@ class Sampler:
         n_swaps_accepted = 0
         swap_history: list[dict[str, Any]] = []
 
-        # Run warmup phase first (once, not interleaved) — each chain with its own β
-        warmup_config = _with_warmup(config, config.n_warmup)
-        warmup_results: list[dict[str, Any]] = []
+        # ── WARMUP ────────────────────────────────────────────────────────
+        # Build a warmup config per chain so per-chain mass matrix / step size
+        # seeds (when provided) override the shared config values.
+        n_warmup = config.n_warmup
+        warmup_configs: list[SamplerConfig] = []
         for i in range(n_chains):
-            self.bayes_net.set_parameters(positions[i])
-            r = self._run_single(warmup_config, 1, beta=chain_betas[i])
-            warmup_results.append(r)
-        for i in range(n_chains):
-            if warmup_results[i]["parameters"]:
-                positions[i] = warmup_results[i]["parameters"][-1].clone()
-            # Preserve diagnostics (adapted step size, mass matrix) from warmup
-            chain_diagnostics[i] = warmup_results[i].get("diagnostics", {})
+            wc = _with_warmup(config, n_warmup)
+            seed_eps = (
+                per_chain_step_size[i]
+                if per_chain_step_size is not None
+                else config.step_size
+            )
+            seed_M = (
+                per_chain_mass_matrix[i]
+                if per_chain_mass_matrix is not None
+                else config.mass_matrix
+            )
+            warmup_configs.append(
+                _with_step_size(wc, float(seed_eps), seed_M)
+            )
+        print(
+            f"  [PT] ═══ WARMUP ({n_warmup} steps × {n_chains} chains) ═══"
+        )
 
-        # Build per-chain configs with adapted step sizes from warmup
-        # Each chain at a different β will have a different optimal ε
+        for i in range(n_chains):
+            chain_nets[i].set_parameters(positions[i])
+            r = self._run_single(
+                warmup_configs[i], 1, bayes_net=chain_nets[i],
+                beta=chain_betas[i],
+                chain_label=f"c{i}|β={chain_betas[i]:.2f}",
+            )
+            if r["parameters"]:
+                positions[i] = r["parameters"][-1].clone()
+            chain_diagnostics[i] = r.get("diagnostics", {})
+            chain_diagnostics[i]["_acceptance_rate"] = r.get("acceptance_rate")
+
+        # Log warmup summary
+        print(f"  [PT] ─── Warmup complete ───")
+        for i in range(n_chains):
+            diag = chain_diagnostics[i]
+            eps = diag.get("adapted_step_size", config.step_size)
+            acc = diag.get("_acceptance_rate")
+            acc_str = f"{acc:.2f}" if isinstance(acc, (int, float)) else "?"
+            print(
+                f"        chain {i} (β={chain_betas[i]:.2f}): "
+                f"ε={float(eps):.2e}, accept={acc_str}"
+            )
+
+        # Build per-chain configs with adapted step sizes from warmup.
+        # Fall back to per-chain seeds (or the shared config) when adaptation
+        # didn't run (e.g. n_warmup=0 with pre-adapted M/ε passed in).
         chain_configs: list[SamplerConfig] = []
         for i in range(n_chains):
             diag = chain_diagnostics[i]
-            adapted_eps = diag.get("adapted_step_size", config.step_size)
-            adapted_M = diag.get("adapted_mass_matrix", config.mass_matrix)
+            seed_eps_i = (
+                per_chain_step_size[i]
+                if per_chain_step_size is not None
+                else config.step_size
+            )
+            seed_M_i = (
+                per_chain_mass_matrix[i]
+                if per_chain_mass_matrix is not None
+                else config.mass_matrix
+            )
+            adapted_eps = diag.get("adapted_step_size", seed_eps_i)
+            adapted_M = diag.get("adapted_mass_matrix", seed_M_i)
             chain_configs.append(
                 _with_warmup(
                     _with_step_size(config, float(adapted_eps), adapted_M),
                     0,
                 )
             )
+
+        # ── SAMPLING WITH SWAPS ──────────────────────────────────────────
+        n_segments = (n_samples + swap_every - 1) // swap_every
+        print(
+            f"  [PT] ═══ SAMPLING ({n_samples} steps, "
+            f"{n_segments} segments × {swap_every} steps) ═══"
+        )
+
         remaining = n_samples
         swap_round = 0
+        samples_done = 0
+
+        # Cold-chain (β=1) per-step diagnostics accumulators
+        cold_depths: list[int] = []
+        cold_leapfrogs: list[int] = []
+        cold_divergences: int = 0
+        cold_alphas: list[float] = []
+        _prev_cold_divs: int = 0
 
         while remaining > 0:
             seg_size = min(swap_every, remaining)
 
-            # Run all chains for this segment — sequentially with per-chain β and ε
+            # Run all chains for this segment
             seg_results: list[dict[str, Any]] = []
             for i in range(n_chains):
-                self.bayes_net.set_parameters(positions[i])
-                r = self._run_single(chain_configs[i], seg_size, beta=chain_betas[i])
+                chain_nets[i].set_parameters(positions[i])
+                r = self._run_single(
+                    chain_configs[i], seg_size, bayes_net=chain_nets[i],
+                    beta=chain_betas[i],
+                    step_offset=samples_done, n_total_expected=n_samples,
+                    chain_label=f"c{i}|β={chain_betas[i]:.2f}",
+                )
                 seg_results.append(r)
+
+            samples_done += seg_size
 
             for i in range(n_chains):
                 raw = seg_results[i]
@@ -508,11 +619,20 @@ class Sampler:
                 if raw["parameters"]:
                     positions[i] = raw["parameters"][-1].clone()
 
+            # Track cold-chain diagnostics
+            cold_diag = seg_results[0].get("diagnostics", {})
+            cold_depths.extend(cold_diag.get("tree_depths", []))
+            cold_leapfrogs.extend(cold_diag.get("leapfrog_counts", []))
+            cold_divergences += cold_diag.get("n_divergences", 0)
+            # acceptance_rate from the segment gives α for this step
+            cold_alphas.append(seg_results[0].get("acceptance_rate", 1.0))
+
             remaining -= seg_size
 
             # ── DEO swap proposal ─────────────────────────────────────────
             if remaining > 0 and n_chains >= 2:
                 start = swap_round % 2  # even=0, odd=1
+
                 for j in range(start, n_chains - 1, 2):
                     k = j + 1
                     n_swaps_proposed += 1
@@ -520,7 +640,6 @@ class Sampler:
                     if use_pt:
                         # Replica exchange: need untempered log-likelihoods
                         # log α = (β_j - β_k) · (ll_k - ll_j)
-                        # where ll is the untempered log-likelihood
                         ll_j = self._log_likelihood(positions[j])
                         ll_k = self._log_likelihood(positions[k])
                         log_alpha = (chain_betas[j] - chain_betas[k]) * (ll_k - ll_j)
@@ -532,37 +651,63 @@ class Sampler:
                         lp_k_swap = self._log_joint(positions[j])
                         log_alpha = (lp_j_swap + lp_k_swap) - (lp_j + lp_k)
 
-                    if torch.log(torch.rand(1)).item() < log_alpha:
+                    accepted = torch.log(torch.rand(1)).item() < log_alpha
+                    if accepted:
                         positions[j], positions[k] = positions[k], positions[j]
-                        if use_pt:
-                            # Swap the β assignments too — replicas stay,
-                            # temperatures stay, positions swap
-                            pass  # positions swap, betas DON'T swap
                         n_swaps_accepted += 1
-                        if use_pt:
-                            print(
-                                f"  [swap round {swap_round}] accepted: "
-                                f"β={chain_betas[j]:.2f} ↔ β={chain_betas[k]:.2f} "
-                                f"(log α = {log_alpha:.2f})"
-                            )
-                        swap_history.append(
-                            {
-                                "round": swap_round,
-                                "pair": (j, k),
-                                "accepted": True,
-                                "log_alpha": log_alpha,
-                            }
-                        )
-                    else:
-                        swap_history.append(
-                            {
-                                "round": swap_round,
-                                "pair": (j, k),
-                                "accepted": False,
-                                "log_alpha": log_alpha,
-                            }
-                        )
+
+                    swap_history.append(
+                        {
+                            "round": swap_round,
+                            "pair": (j, k),
+                            "accepted": accepted,
+                            "log_alpha": log_alpha,
+                        }
+                    )
                 swap_round += 1
+
+                # Log progress every 10 swap rounds (with cold-chain diagnostics)
+                if swap_round % 10 == 0:
+                    rate_so_far = n_swaps_accepted / max(1, n_swaps_proposed)
+                    # Cold-chain stats over last 10 steps
+                    recent_depths = cold_depths[-10:]
+                    recent_L = cold_leapfrogs[-10:]
+                    recent_alpha = cold_alphas[-10:]
+                    chunk_max_depth = max(recent_depths) if recent_depths else 0
+                    chunk_max_L = max(recent_L) if recent_L else 0
+                    avg_alpha = sum(recent_alpha) / max(1, len(recent_alpha))
+                    chunk_divs = cold_divergences - _prev_cold_divs
+                    _prev_cold_divs = cold_divergences
+                    print(
+                        f"  [PT] step {samples_done}/{n_samples} │ "
+                        f"swap round {swap_round} │ "
+                        f"swaps: {n_swaps_accepted}/{n_swaps_proposed} "
+                        f"({rate_so_far:.0%}) │ "
+                        f"cold: max_depth={chunk_max_depth} max_L={chunk_max_L} "
+                        f"α={avg_alpha:.2f} divs={chunk_divs}/10"
+                    )
+
+        # ── Final summary ─────────────────────────────────────────────────
+        swap_rate = n_swaps_accepted / max(1, n_swaps_proposed)
+        max_depth_all = max(cold_depths) if cold_depths else 0
+        max_L_all = max(cold_leapfrogs) if cold_leapfrogs else 0
+        avg_alpha_all = sum(cold_alphas) / max(1, len(cold_alphas))
+        print(
+            f"  [PT] ═══ DONE ═══  "
+            f"swaps: {n_swaps_accepted}/{n_swaps_proposed} "
+            f"({swap_rate:.1%})"
+        )
+        print(
+            f"        cold chain: max_depth={max_depth_all}, "
+            f"max_L={max_L_all}, α={avg_alpha_all:.2f}, "
+            f"divergences={cold_divergences}/{n_samples}"
+        )
+        for i in range(n_chains):
+            print(
+                f"        chain {i} (β={chain_betas[i]:.2f}): "
+                f"{len(chain_samples[i])} samples, "
+                f"accept={chain_accept[i]:.3f}"
+            )
 
         # Assemble results
         backend_name = type(config).__name__.lower()

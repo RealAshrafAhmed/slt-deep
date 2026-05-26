@@ -265,3 +265,212 @@ mise run mcl-sc:focus -- \
 	--lr "$LR" \
 	--batch-size "$BATCH_SIZE"
 '''
+
+["mcl-sc:no-hessian:data"]
+description = "Single-chain H1: NUTS sampling without Hessian init (data generation)"
+dir = "projects/markov-chain-learning/experiments/single-chain"
+usage = '''
+flag "--run-name <name>" help="Run name (used for output directory)" env="RUN_NAME" default="default"
+flag "--n-warmup <n>" help="Initial H1 warmup steps" env="N_WARMUP" default="2000"
+flag "--n-production <n>" help="H1 production samples" env="N_PRODUCTION" default="500"
+flag "--run-iterative <bool>" help="Run H1-1 iterative refinement" env="RUN_ITERATIVE" default="true"
+flag "--n-rounds <n>" help="H1-1: number of warmup→production rounds" env="N_ROUNDS" default="5"
+flag "--n-warmup-per-round <n>" help="H1-1: warmup steps per round" env="N_WARMUP_PER_ROUND" default="2000"
+flag "--n-samples-per-round <n>" help="H1-1: production draws per round" env="N_SAMPLES_PER_ROUND" default="500"
+flag "--max-tree-depth <n>" help="NUTS max tree depth" env="MAX_TREE_DEPTH" default="4"
+flag "--target-accept <f>" help="Target acceptance rate" env="TARGET_ACCEPT" default="0.6"
+flag "--sigma-prior <f>" help="Prior std" env="SIGMA_PRIOR" default="10.0"
+flag "--start-fresh <bool>" help="Start from identity mass matrix" env="START_FRESH" default="true"
+flag "--resume <bool>" help="Resume H1-1 from highest existing round_NN.pt" env="RESUME" default="false"
+flag "--log-output <enabled>" help="Stream notebook stdout to terminal" env="PAPERMILL_LOG_OUTPUT" default="true"
+'''
+run = '''
+set -euo pipefail
+
+RUN_NAME="${usage_run_name?}"
+N_WARMUP="${usage_n_warmup?}"
+N_PRODUCTION="${usage_n_production?}"
+RUN_ITERATIVE="${usage_run_iterative?}"
+N_ROUNDS="${usage_n_rounds?}"
+N_WARMUP_PER_ROUND="${usage_n_warmup_per_round?}"
+N_SAMPLES_PER_ROUND="${usage_n_samples_per_round?}"
+MAX_TREE_DEPTH="${usage_max_tree_depth?}"
+TARGET_ACCEPT="${usage_target_accept?}"
+SIGMA_PRIOR="${usage_sigma_prior?}"
+START_FRESH="${usage_start_fresh?}"
+RESUME="${usage_resume?}"
+PAPERMILL_LOG_OUTPUT="${usage_log_output?}"
+
+DATA_DIR="$(pwd)/data"
+EXEC_DIR="$DATA_DIR/results_no_hessian/${RUN_NAME}"
+mkdir -p "$EXEC_DIR"
+
+if [[ ! -f "$DATA_DIR/hessian.pt" ]]; then
+	echo "ERROR: $DATA_DIR/hessian.pt not found. Run 04_training.ipynb first." >&2
+	exit 1
+fi
+
+PAPERMILL_LOG_OUTPUT_NORMALIZED="$(printf '%s' "$PAPERMILL_LOG_OUTPUT" | tr '[:upper:]' '[:lower:]')"
+LOG_FLAG=""
+if [[ "$PAPERMILL_LOG_OUTPUT_NORMALIZED" == "1" || "$PAPERMILL_LOG_OUTPUT_NORMALIZED" == "true" || "$PAPERMILL_LOG_OUTPUT_NORMALIZED" == "yes" ]]; then
+	LOG_FLAG="--log-output"
+fi
+
+uv run papermill $LOG_FLAG \
+	notebooks/05a_sampling_no_hessian_data.ipynb \
+	"$EXEC_DIR/05a_sampling_no_hessian_data_executed.ipynb" \
+	-p RUN_NAME "$RUN_NAME" \
+	-p N_WARMUP "$N_WARMUP" \
+	-p N_PRODUCTION "$N_PRODUCTION" \
+	-p RUN_ITERATIVE "$RUN_ITERATIVE" \
+	-p N_ROUNDS "$N_ROUNDS" \
+	-p N_WARMUP_PER_ROUND "$N_WARMUP_PER_ROUND" \
+	-p N_SAMPLES_PER_ROUND "$N_SAMPLES_PER_ROUND" \
+	-p MAX_TREE_DEPTH "$MAX_TREE_DEPTH" \
+	-p TARGET_ACCEPT "$TARGET_ACCEPT" \
+	-p SIGMA_PRIOR "$SIGMA_PRIOR" \
+	-p START_FRESH "$START_FRESH" \
+	-p RESUME "$RESUME"
+'''
+
+["mcl-sc:no-hessian:analysis"]
+description = "Single-chain H1: analysis of NUTS-no-Hessian samples (ACF, ESS, verdict)"
+dir = "projects/markov-chain-learning/experiments/single-chain"
+usage = '''
+flag "--run-name <name>" help="Run name to analyze" env="RUN_NAME" default="default"
+flag "--log-output <enabled>" help="Stream notebook stdout to terminal" env="PAPERMILL_LOG_OUTPUT" default="true"
+'''
+run = '''
+set -euo pipefail
+
+RUN_NAME="${usage_run_name?}"
+PAPERMILL_LOG_OUTPUT="${usage_log_output?}"
+
+DATA_DIR="$(pwd)/data"
+EXEC_DIR="$DATA_DIR/results_no_hessian/${RUN_NAME}"
+
+if [[ ! -f "$EXEC_DIR/nuts_samples_no_hessian.pt" ]]; then
+	echo "ERROR: $EXEC_DIR/nuts_samples_no_hessian.pt not found. Run mcl-sc:no-hessian:data first." >&2
+	exit 1
+fi
+
+PAPERMILL_LOG_OUTPUT_NORMALIZED="$(printf '%s' "$PAPERMILL_LOG_OUTPUT" | tr '[:upper:]' '[:lower:]')"
+LOG_FLAG=""
+if [[ "$PAPERMILL_LOG_OUTPUT_NORMALIZED" == "1" || "$PAPERMILL_LOG_OUTPUT_NORMALIZED" == "true" || "$PAPERMILL_LOG_OUTPUT_NORMALIZED" == "yes" ]]; then
+	LOG_FLAG="--log-output"
+fi
+
+uv run papermill $LOG_FLAG \
+	notebooks/05a_sampling_no_hessian_analysis.ipynb \
+	"$EXEC_DIR/05a_sampling_no_hessian_analysis_executed.ipynb" \
+	-p RUN_NAME "$RUN_NAME"
+'''
+
+["mcl-sc:tempered:data"]
+description = "Single-chain H3 + H3-1: Parallel tempering NUTS, initial run + iterative refinement (data generation)"
+dir = "projects/markov-chain-learning/experiments/single-chain"
+usage = '''
+flag "--run-name <name>" help="Run name (used for output directory)" env="RUN_NAME" default="default"
+flag "--betas <list>" help="Inverse temperature ladder (JSON list)" env="BETAS" default="[1.0, 0.85, 0.7, 0.55, 0.45, 0.35, 0.25, 0.15]"
+flag "--swap-every <n>" help="DEO swap interval (samples between swap proposals)" env="SWAP_EVERY" default="1"
+flag "--n-warmup <n>" help="H3 initial warmup steps per chain" env="N_WARMUP" default="2000"
+flag "--n-samples <n>" help="H3 initial production samples per chain" env="N_SAMPLES" default="500"
+flag "--max-tree-depth <n>" help="NUTS max tree depth" env="MAX_TREE_DEPTH" default="4"
+flag "--target-accept <f>" help="Target acceptance rate" env="TARGET_ACCEPT" default="0.6"
+flag "--sigma-prior <f>" help="Prior std" env="SIGMA_PRIOR" default="10.0"
+flag "--init-perturb-scale <f>" help="Init perturbation scale around MLE" env="INIT_PERTURB_SCALE" default="1.0"
+flag "--run-iterative <bool>" help="Run H3-1 iterative refinement" env="RUN_ITERATIVE" default="true"
+flag "--n-rounds <n>" help="H3-1: number of warmup→production rounds" env="N_ROUNDS" default="5"
+flag "--n-warmup-per-round <n>" help="H3-1: warmup steps per round (each chain)" env="N_WARMUP_PER_ROUND" default="2000"
+flag "--n-samples-per-round <n>" help="H3-1: production draws per round (each chain)" env="N_SAMPLES_PER_ROUND" default="500"
+flag "--resume <bool>" help="Resume H3-1 from highest existing round_NN.pt" env="RESUME" default="false"
+flag "--log-output <enabled>" help="Stream notebook stdout to terminal" env="PAPERMILL_LOG_OUTPUT" default="true"
+'''
+run = '''
+set -euo pipefail
+
+RUN_NAME="${usage_run_name?}"
+BETAS="${usage_betas?}"
+SWAP_EVERY="${usage_swap_every?}"
+N_WARMUP="${usage_n_warmup?}"
+N_SAMPLES="${usage_n_samples?}"
+MAX_TREE_DEPTH="${usage_max_tree_depth?}"
+TARGET_ACCEPT="${usage_target_accept?}"
+SIGMA_PRIOR="${usage_sigma_prior?}"
+INIT_PERTURB_SCALE="${usage_init_perturb_scale?}"
+RUN_ITERATIVE="${usage_run_iterative?}"
+N_ROUNDS="${usage_n_rounds?}"
+N_WARMUP_PER_ROUND="${usage_n_warmup_per_round?}"
+N_SAMPLES_PER_ROUND="${usage_n_samples_per_round?}"
+RESUME="${usage_resume?}"
+PAPERMILL_LOG_OUTPUT="${usage_log_output?}"
+
+DATA_DIR="$(pwd)/data"
+EXEC_DIR="$DATA_DIR/results_tempered/${RUN_NAME}"
+mkdir -p "$EXEC_DIR"
+
+if [[ ! -f "$DATA_DIR/hessian.pt" ]]; then
+	echo "ERROR: $DATA_DIR/hessian.pt not found. Run 04_training.ipynb first." >&2
+	exit 1
+fi
+
+PAPERMILL_LOG_OUTPUT_NORMALIZED="$(printf '%s' "$PAPERMILL_LOG_OUTPUT" | tr '[:upper:]' '[:lower:]')"
+LOG_FLAG=""
+if [[ "$PAPERMILL_LOG_OUTPUT_NORMALIZED" == "1" || "$PAPERMILL_LOG_OUTPUT_NORMALIZED" == "true" || "$PAPERMILL_LOG_OUTPUT_NORMALIZED" == "yes" ]]; then
+	LOG_FLAG="--log-output"
+fi
+
+uv run papermill $LOG_FLAG \
+	notebooks/05b_sampling_tempered_data.ipynb \
+	"$EXEC_DIR/05b_sampling_tempered_data_executed.ipynb" \
+	-p RUN_NAME "$RUN_NAME" \
+	-y "BETAS: $BETAS" \
+	-p SWAP_EVERY "$SWAP_EVERY" \
+	-p N_WARMUP "$N_WARMUP" \
+	-p N_SAMPLES "$N_SAMPLES" \
+	-p MAX_TREE_DEPTH "$MAX_TREE_DEPTH" \
+	-p TARGET_ACCEPT "$TARGET_ACCEPT" \
+	-p SIGMA_PRIOR "$SIGMA_PRIOR" \
+	-p INIT_PERTURB_SCALE "$INIT_PERTURB_SCALE" \
+	-p RUN_ITERATIVE "$RUN_ITERATIVE" \
+	-p N_ROUNDS "$N_ROUNDS" \
+	-p N_WARMUP_PER_ROUND "$N_WARMUP_PER_ROUND" \
+	-p N_SAMPLES_PER_ROUND "$N_SAMPLES_PER_ROUND" \
+	-p RESUME "$RESUME"
+'''
+
+["mcl-sc:tempered:analysis"]
+description = "Single-chain H3: analysis of tempered samples (ACF, ESS vs H1 baseline)"
+dir = "projects/markov-chain-learning/experiments/single-chain"
+usage = '''
+flag "--run-name <name>" help="Run name to analyze" env="RUN_NAME" default="default"
+flag "--baseline-run <name>" help="H1 run name for ESS comparison" env="BASELINE_RUN" default="default"
+flag "--log-output <enabled>" help="Stream notebook stdout to terminal" env="PAPERMILL_LOG_OUTPUT" default="true"
+'''
+run = '''
+set -euo pipefail
+
+RUN_NAME="${usage_run_name?}"
+BASELINE_RUN="${usage_baseline_run?}"
+PAPERMILL_LOG_OUTPUT="${usage_log_output?}"
+
+DATA_DIR="$(pwd)/data"
+EXEC_DIR="$DATA_DIR/results_tempered/${RUN_NAME}"
+
+if [[ ! -f "$EXEC_DIR/nuts_samples.pt" ]]; then
+	echo "ERROR: $EXEC_DIR/nuts_samples.pt not found. Run mcl-sc:tempered:data first." >&2
+	exit 1
+fi
+
+PAPERMILL_LOG_OUTPUT_NORMALIZED="$(printf '%s' "$PAPERMILL_LOG_OUTPUT" | tr '[:upper:]' '[:lower:]')"
+LOG_FLAG=""
+if [[ "$PAPERMILL_LOG_OUTPUT_NORMALIZED" == "1" || "$PAPERMILL_LOG_OUTPUT_NORMALIZED" == "true" || "$PAPERMILL_LOG_OUTPUT_NORMALIZED" == "yes" ]]; then
+	LOG_FLAG="--log-output"
+fi
+
+uv run papermill $LOG_FLAG \
+	notebooks/05b_sampling_tempered_analysis.ipynb \
+	"$EXEC_DIR/05b_sampling_tempered_analysis_executed.ipynb" \
+	-p RUN_NAME "$RUN_NAME" \
+	-p BASELINE_RUN "$BASELINE_RUN"
+'''
