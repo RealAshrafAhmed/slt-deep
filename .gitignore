@@ -25,7 +25,6 @@ build/
 # Research artifacts
 *.pkl
 *.pickle
-*.pt
 *.pth
 *.h5
 *.hdf5
