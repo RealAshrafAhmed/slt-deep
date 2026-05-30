@@ -72,6 +72,10 @@ class MultiChainResult:
             return 0.0
         return self.n_swaps_accepted / self.n_swaps_proposed
 
+    def swap_acceptance_rate(self) -> float:
+        """Alias for :pyattr:`swap_rate` (callable form for API symmetry)."""
+        return self.swap_rate
+
     def flat_parameters(self) -> list[torch.Tensor]:
         """Concatenate all chains' samples into a single list."""
         out: list[torch.Tensor] = []

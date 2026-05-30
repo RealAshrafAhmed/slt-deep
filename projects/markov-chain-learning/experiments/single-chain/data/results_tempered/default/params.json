@@ -1,0 +1,29 @@
+{
+  "run_name": "default",
+  "betas": [
+    1.0,
+    0.85,
+    0.7,
+    0.55,
+    0.45,
+    0.35,
+    0.25,
+    0.15
+  ],
+  "n_chains": 8,
+  "swap_every": 1,
+  "n_warmup": 2000,
+  "n_samples": 500,
+  "max_tree_depth": 4,
+  "target_accept": 0.6,
+  "sigma_prior": 10.0,
+  "init_perturb_scale": 1.0,
+  "dgp_regime": "single",
+  "d": 910,
+  "elapsed_seconds": 14181.309009075165,
+  "timestamp": "2026-05-26T15:44:59",
+  "run_iterative": "true",
+  "n_rounds": 5,
+  "n_warmup_per_round": 2000,
+  "n_samples_per_round": 500
+}

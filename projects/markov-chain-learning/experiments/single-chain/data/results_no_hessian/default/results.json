@@ -1,0 +1,43 @@
+{
+  "experiment": "05a_sampling_no_hessian",
+  "run_name": "default",
+  "hypothesis": "H1: singular geometry defeats any fixed mass matrix",
+  "verdict": "INCONCLUSIVE",
+  "verdict_source": "final H1-1 round",
+  "config": {
+    "d": 910,
+    "n_warmup": 2000,
+    "n_samples": 500,
+    "max_tree_depth": 4,
+    "sigma_prior": 10.0,
+    "dgp_regime": "single"
+  },
+  "hessian": {
+    "tau_fp32": 4.759106254577636e-07,
+    "n_nondegen": 158,
+    "n_degen": 752,
+    "eig_range": [
+      -0.07338227331638336,
+      3.9659218788146973
+    ]
+  },
+  "h11_final": {
+    "round": 5,
+    "n_draws": 500,
+    "acf50_median": 0.4529888331890106,
+    "acf50_nd_median": 0.4462665915489197,
+    "acf50_dg_median": 0.45545825362205505,
+    "ess_median": 5.111699104309082,
+    "ess_nd_median": 5.329606056213379,
+    "ess_dg_median": 5.0681867599487305,
+    "cond_M": 85341577216.0,
+    "step_size": 0.00423848113260533,
+    "acceptance_rate": 1.0
+  },
+  "h11_first": {
+    "round": 1,
+    "acf50_median": 0.48727381229400635,
+    "ess_median": 4.711819171905518
+  },
+  "h11_ess_gain": 1.0848674191038294
+}
