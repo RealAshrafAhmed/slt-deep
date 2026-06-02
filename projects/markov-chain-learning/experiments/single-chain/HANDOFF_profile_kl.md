@@ -118,6 +118,49 @@ Run the setup cell `d1331132` first (it defines loss_fn, H_FLOOR, KL_BATCH/LR, _
 etc. that this cell reuses). Expensive part: per M a 200-epoch anchor fit + 4×60-epoch cells;
 M=50k is the slow one.
 
+## HYPOTHESIS 2 — why the 2-param profile is flat, and how to get a non-flat one
+
+**Hypothesis (degenerate-set compensation):** The Hessian at w* has a large degenerate
+subspace (~700 near-zero eigenvalues out of 910). That means the min-NLL set is an ~700-dim
+"level set of equivalent parameters". When we fix 2 coordinates and minimize the other 908,
+the optimizer just slides ALONG that ~700-dim equivalence set to a point that still achieves
+min NLL — so the profile is flat. This is the honest version of the earlier (badly stated)
+"the zero set is huge" claim: count the degenerate directions = dimension of the equivalence
+set; fixing 2 coords does not escape it. Consistent with everything observed.
+
+**Corollaries:**
+- To get a NON-flat profile you must constrain a direction in the NON-degenerate complement,
+  i.e. a **stiff eigenvector** (large eigenvalue, ~200-dim complement). Fixing a coefficient
+  along a stiff eigenvector cannot be compensated by sliding along the degenerate set, so KL
+  rises. Single raw parameters fail because they project mostly into the degenerate set.
+- **Eigenvectors are only a LOCAL LINEAR frame** (tangent directions of the geometry AT w*).
+  The true zero-set is a curved analytic variety — the "curvature coordinates" are nonlinear.
+  So a straight eigenvector line is valid only in a SMALL neighborhood of w*; far out (±2,±3)
+  the line leaves the curved valley and the values stop meaning "along the soft/stiff
+  direction" (this is why the sloppy-eigvec SLICE rose at ±3 — the straight cut wandered off
+  the bent flat valley into a steep region).
+
+**Test plan:**
+1. Quantify the degeneracy: eigendecompose H(F) at w*, count eigenvalues below a small
+   threshold (e.g. λ_max·1e-3 and 1e-6). Confirm ~700 are degenerate (the claim should be
+   MEASURED, not assumed). Report the count + the spectrum.
+2. Profile along the 2 STIFFEST eigenvectors (use `fit_constrained_directions`, already in
+   `torch_bdn.bn`), at SMALL radius (±0.3) with a FINE grid (e.g. 15–21 pts) so the local
+   linear frame stays valid. Expect a non-flat bowl with the star at the bottom.
+3. Contrast: also profile along the 2 SOFTEST eigenvectors at the same small radius — expect
+   ~flat (still compensable / in the degenerate set). Stiff-curved vs soft-flat at small
+   radius is the clean signature.
+4. (Optional, second-order) To follow the curved valley further than the local frame allows,
+   recompute H along the path and re-derive the eigenbasis at a few radii, rather than
+   extrapolating one straight eigenvector line.
+
+**Read:** stiff-eigvec profile rises near w* (real, incompressible curvature) while
+soft-eigvec profile stays flat (degenerate/compensable) → confirms the degenerate-set
+hypothesis AND gives the correct way to draw level sets for sampler diagnosis (stiff
+eigenvectors, small radius). NOTE this is distinct from Hypothesis B (under-sampling): both
+can be tested; if the M-sweep (cell `c8bf815d`) shows flatness is M-independent, that points
+to this degeneracy explanation rather than under-sampling.
+
 ## Environment notes
 
 - Run from repo root `/Users/ashrafahmed/workspace/slt-deep` with `uv run --active python3`
