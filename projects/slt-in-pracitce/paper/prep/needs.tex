@@ -1,0 +1,352 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{amsmath}
+
+\geometry{margin=1in}
+
+\newcommand{\resolved}[1]{\textcolor{teal}{\textbf{[RESOLVED]} #1}}
+\newcommand{\open}{\textcolor{red}{\textbf{[OPEN]}} }
+\newcommand{\partialr}{\textcolor{orange}{\textbf{[PARTIAL]}} }
+\newcommand{\cref}[1]{\textcolor{purple}{\textbf{[#1]}} }
+
+\title{\textbf{Singular Learning Theory for Applied Deep Learning}\\[8pt]
+\large Needs Document: Open Items by Section}
+\author{Working Document, aligned with goals (v5) and analysis (v3)}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\noindent\emph{Reconstructed from the flags in the analysis plan plus
+items opened or resolved in the framing rounds. Every [NEED] and
+[VERIFY] in the analysis plan points here. Status: \open{} not started;
+\partialr{} evidence gathered, statement not pinned;
+\textcolor{teal}{\textbf{[RESOLVED]}} citable, with source. Items
+backing a load-bearing contingency in the goals document carry its tag
+(\cref{C1}--\cref{C7}); resolving a tagged item settles the
+corresponding contingency, and where the goals ledger records an upside
+action, it is repeated here so the verification work is scoped knowing
+what it purchases.}
+
+% ============================================================================
+\section{Section 1 Needs}
+% ============================================================================
+
+\subsection*{Pillar 1 --- wrong results}
+\begin{itemize}[itemsep=4pt]
+\item \open \cref{C2} Wei--Lau singular VI (arXiv:2302.06035): pin the
+precise statement of mean-field's failure on singular posteriors and of
+the resolution-of-singularities family's fix; identify the reproducible
+small experiment for the \S1 figure; \emph{and} check the scale at which
+singular VI is computable relative to the reader's models --- the scale
+check decides \S4.3's register (provocative if computable at relevant
+scale; humble geometry-settled/computation-frontier otherwise, per
+framing decision (i)). If the statement check fails, Pillar 1 leans on
+the degenerate-Hessian Laplace exhibit as anchor.
+\item \open Normalization / scale-invariance: the van Laarhoven lineage;
+the precise sense in which the weight-decay complexity rationale is void
+under $f(x,\alpha\theta)=f(x,\theta)$; exact citations.
+\end{itemize}
+
+\subsection*{Pillar 2 --- misaimed fixes (and the audit table)}
+\begin{itemize}[itemsep=4pt]
+\item \partialr Koh--Liang influence functions: assumption (strict
+convexity, PD Hessian) and the damping repair ($H+\lambda I$, $\lambda >
+|E_0|$) are confirmed, including the observation that optimization leads
+to critical points with a majority of near-zero eigenvalues. Remaining:
+pin the primary locus of the ``damping large enough to distort'' result
+(Basu et al.\ 2020 and the OOD-IF literature) with page/claim.
+\item \partialr Second-order damping ritual: Martens 2010 damping trick
+confirmed in secondary sources; cite from the primary. K-FAC damping:
+pull the exact treatment from Martens--Grosse 2015.
+\item \open Sharpness lineage: exact Dinh et al.\ 2017 statement; one
+citable instance of the field repairing the sharpness measure
+post-critique (e.g.\ adaptive/invariant sharpness variants) for the
+``repaired the measure, not the object'' claim.
+\item \open Audit table reconciliation (updated to goals v5): update the
+drafted table (dl\_section1\_audit\_table.tex) to (a) \emph{remove} the
+convergence-guarantees row from the table --- it is a level-2 item and
+moves to \S4.2's recast (goals decision (k)); (b) add the third gate:
+every row makes a parameter-space claim (posterior, uncertainty region,
+influence, curvature, parameter count); (c) the masking framing in the
+caption; (d) a diagnosis-tag column (geometry / sample size /
+computation) per row.
+\end{itemize}
+
+\subsection*{Pillar 3 --- regularizing instead of redesigning}
+\begin{itemize}[itemsep=4pt]
+\item \open \cref{C5} Confirm the one-reflex framing holds across the
+table's ``shipped repair'' column --- that damping, Gaussian families,
+and sharpness penalties are genuinely one move at different sites and
+can be presented as such without overreach. Now gated to
+parameter-space rows only (easier, per the table's third gate).
+Fallback if it fails: ``a family of regularity-restoring moves''; the
+escalation ordering survives.
+\end{itemize}
+
+\subsection*{Pillar 4 --- folklore in the gap}
+\begin{itemize}[itemsep=4pt]
+\item \partialr Convergence guarantees, scoped (replaces the old
+``guarantees assume non-degenerate Hessian'' item, which is \emph{not}
+accurate as stated): modern nonconvex Adam/RMSProp analyses deliver
+convergence to $\epsilon$-stationary points under (generalized)
+smoothness and do not require a PD Hessian; guarantees promising minima
+invoke PL or strong convexity; PL tolerates non-isolated minima but is
+blind to strata. Remaining: select the two or three canonical citations
+(e.g.\ relaxed-assumption Adam analyses; a PL-condition reference) and
+one instance of tuning lore bridging the gap (warmup/schedule folklore).
+\emph{Placement update (goals v5, decision (k)): the convergence-lore
+folklore face moves from \S1 to \S4.2; \S1's folklore faces are the
+variational-gap misattribution and the damping ritual only. The
+citations gathered here serve \S4.2.}
+\item \open Hagiwara: AIC fails to size perceptrons, traced to singular
+structure --- confirm citation and year (referenced via Amari-school
+secondary sources; find the primary).
+\item \open The damping-ritual folklore face: assemble the
+hand-tuned-$\lambda$ evidence across Laplace / influence / natural
+gradient / K-FAC (rules of thumb, per-problem tuning) --- two or three
+citable instances suffice.
+\item \resolved{Watanabe capstone (the language had to be imported):
+Watanabe's own exposition states that in deep learning a statistical
+sub-model corresponds to an algebraic variety, that singularities are
+made normal crossing via Hironaka's resolution, and that learning is
+captured by two birational invariants (RLCT, singular fluctuation).
+Source: Watanabe's SLT exposition and the 2009 Cambridge book. Supports
+\S1.4 and \S2.2.}
+\item \partialr Information-geometry precedent (the ``seen'' half of
+seen-but-not-mainstreamed): Fukumizu 1996 (regularity condition of the
+information matrix); Fukumizu--Amari 2000 (plateaus from singular
+structure); Amari--Park--Ozeki 2002/2006 (neuromanifold singularities;
+Milnor attractors); singular structure identified as common to MLPs, RBF
+nets, mixtures, ARMA. Gathered from the literature pass; pin exact
+citations in the bibliography. Remaining: keep the Watanabe--Amari
+personal lineage OUT unless a primary source is found --- the claim stays
+institutional.
+\end{itemize}
+
+% ============================================================================
+\section{Section 2 Needs}
+% ============================================================================
+
+\begin{itemize}[itemsep=4pt]
+\item \open Catalogue of architectural continuous symmetries with
+citations (normalization scale-invariance; homogeneous-activation
+rescaling; softmax shift; attention-head permutation as the discrete
+part).
+\item \open DGP degeneracy: state as presumption, not theorem
+(``delete a node and the fit degrades'' is probably false); find the
+honest citable form.
+\item \resolved{Watanabe uses ``normal crossing'' and ``algebraic
+variety in the parameter space'' for DL sub-models --- confirmed in his
+own exposition; supports the \S2.2 thesis and the paper's positioning.}
+\item \open The microscope FFN: fix the architecture (small enough for
+2D KL slices; rich enough for a genuine crossing); produce the
+hyperbolic-vs-parabolic contour figure and the contour
+$\leftrightarrow$ eigenspectrum calibration figure.
+\item \open \S2.4 promoted experiment (load-bearing for the sample-size
+arm of the diagnosis): posterior/sample cloud at multiple $n$;
+null-space profile vs.\ ($n \times$ degeneracy knob). The figure must
+support both readings: small $n$ masks the geometry (regular tools
+``work''); growing $n$ reveals it (conclusions may not transfer). The
+figure's specified job now includes the diffusion mechanism (goals v5,
+\S2 overview): the level sets fix how much room finite-$n$ estimates
+have to wander; growing $n$ closes the room, revealing the set --- show
+the cloud shrinking onto the crossing.
+\item \open \cref{C4} \S2.4 literature check (higher bar now): the
+$n$-revelation and $n$--dimension compounding claim against
+finite-sample and dimension-dependence results in SLT before any strong
+form is stated --- which also asks whether the compounding is genuinely
+unspelled-out (a contribution to name) or already stated (cite and
+lean). Fallback: shown-not-interpreted in \S2; strong form posed as
+open in \S5. \emph{Upside if verified: restore the compounding to the
+goals document's NOT bullet 1 contribution list and to walk-away item
+5's lens sentence.}
+\item \open Optional figure candidate (from the framing round): level-set
+curvature concentration as an empirical crossing signature --- the
+second fundamental form of the KL level sets is flat along single strata
+and concentrates near stratum intersections; plottable on the microscope
+FFN. A candidate, not a commitment; if used, it visualizes ``hyperbolic
+level sets as the empirical signature'' without introducing curvature
+language into the prose (the invariant content stays volume-based).
+\end{itemize}
+
+% ============================================================================
+\section{Section 3 Needs}
+% ============================================================================
+
+\begin{itemize}[itemsep=4pt]
+\item \open Watanabe's exact singular-model definition and analyticity
+conditions (model vs.\ $K$); locations in Watanabe 2009/2013.
+\item \open \cref{C6} Transformer activations are analytic: confirm
+GELU/SiLU analyticity and their dominance in the workbench model class;
+this carries decision (t)'s ``narrowing the gap for the reader's own
+models'' sentence. Fallback: the sentence is cut; the caveat stands on
+the microscope's rigor and the softplus-limit framing alone.
+\item \open Explicit blow-up for the microscope FFN crossing;
+before/after visualization (tangled hyperbolic $\to$ rectangular level
+sets).
+\item \open Hironaka statement with the conditions actually used.
+\item \open Main theorem statement with conditions and limits; the
+free-energy expansion including the $(m-1)\log\log n$ term; the tempered
+posterior / WBIC $\beta = 1/\log n$ statement.
+\item \open Compute $\lambda$ for the microscope FFN (needed for \S2.4's
+concentration rate and \S3.5's validation).
+\item \open \S3.5 validation run: theoretical free energy vs.\
+thermodynamic integration vs.\ parameter-counting baseline at multiple
+$n$; report the $n$ needed honestly (doubles as a computation-maturity
+datapoint for \S4).
+\end{itemize}
+
+% ============================================================================
+\section{Section 4 Needs}
+% ============================================================================
+
+\begin{itemize}[itemsep=4pt]
+\item \open \textbf{The tools-and-maturity audit (gating task for \S4).}
+Per tool: problem solved / diagnosis tag (geometry, sample size,
+computation) / concept-maturity / computation-maturity / scale /
+progress / rough edges / reader layer. Roster at minimum: WBIC-style
+criteria, LLC/rLLC estimation, singular VI, susceptibilities, BIF,
+sampler configurations in \texttt{devinterp}. Scale is an explicit
+column: it assigns the register per decision (i).
+\item \open \textbf{The practice inventory (second gating task, goals
+decision (o)).} Per practitioner activity: claim made / tool used /
+where the computation lives / the question it answers vs.\ the question
+asked / verdict. Feeds the tool-by-question scope table.
+\item \open Watanabe 2010: re-confirm the exact CV$\approx$WAIC statement
+and gen$+$CV$\to 2\lambda/n$; the precise AIC/DIC failure statement.
+\item \open \cref{C3} The small-$n$ selection statement (the
+quantitative half of the two-questions hinge). Verified qualitatively:
+CV/WAIC unbiased for generalization but inconsistent for selection; free
+energy consistent, not unbiased; Watanabe's own deferral of the
+selection comparison. Open: pin the quantitative small-$n$ claim
+(selection signal shrinking against CV noise) in Watanabe's 2021 mixture
+comparison or Yamazaki--Kaji 2013, or demonstrate it with the mixture
+experiment (C1a below). Fallback: \S4.1 states the consistency asymmetry
+without the finite-$n$ rate; the mixture experiment is reported as
+illustration, not theorem.
+\item \open \cref{C1} The conclusion-flip exhibit (backs the masking
+thesis's ``structurally wrong where checkable''). One validated case
+where a regular tool and its singular counterpart disagree on a
+conclusion and the singular answer is verifiably right. Candidates,
+cheapest first: (a) the small-$n$ mixture selection experiment (CV
+selects the larger model; free energy selects the true one) --- doubles
+as the cross-paper bridge to the applied-stats binomial mixture; (b) the
+LLC optimizer exhibit if matched fit holds (C7); (c) BIF-vs-damped-IF
+reordering of influential examples, validated by retraining. Fallback:
+the alarm rests on the structural-wrongness exhibits; the
+conclusion-flip moves to \S5 as the open empirical question; aim (i)'s
+``structurally wrong where checkable'' softens to ``can be structurally
+wrong.''
+\item \open \cref{C7} Matched fit in the LLC optimizer exhibit (Lau et
+al.): the $\lambda$ separation between SGD and entropy-SGD endpoints and
+its low variance are verified as stated by the authors; \emph{not yet
+verified}: that the endpoints have comparable training and test
+performance (1.9M-parameter FFN on MNIST; 80 repetitions). The
+matched-fit half carries the emblematic framing (``equivalent by every
+number you currently look at; different by the number you don't'').
+Fallback: report as optimizer inductive bias made measurable, without
+the equivalence framing; the emblematic slot falls to the BIF alone;
+strike C1(b).
+\item \open Adam recast: remains an illustration unless the
+$v_t$--degenerate-subspace alignment is verified; the scoped-guarantee
+framing carries the honest version either way. New face from goals v5:
+Adam's $\epsilon$ flagged as a candidate damping instance [VERIFY] ---
+check whether the numerical-stability constant admits the
+regularity-restoring reading before the flag is stated.
+\item \resolved{BIF--damping relationship: the local Bayesian influence
+function replaces the ill-posed Hessian inversion with SGMCMC covariance
+estimation, and its leading-order term under a Laplace approximation is
+exactly the classical dampened influence function, with localization
+strength $\gamma$ as the dampening coefficient. Source: the Timaeus BIF
+paper (Hessian-free data attribution). This is the twin arc's
+load-bearing fact and the paper's cleanest
+folklore-constant-becomes-principled exhibit.}
+\item \partialr Susceptibilities/spectroscopy: linear-response framework
+linking LLCs to susceptibilities; response-matrix separation of
+functional modules (multigram, induction heads) confirmed in the
+authors' expositions; pin the primary citations (Baker et al.\ 2025 and
+the loss kernel / susceptibility papers) and which claims each carries.
+\item \open Sampler craft (deepest assessment): temperature,
+localization, weight restriction; failure modes (stuck on one branch;
+mixing too fast to resolve the geometry); what \texttt{devinterp}
+exposes vs.\ what remains manual. Explicitly record: a formally
+stratification-preserving sampler does not exist as a citable method ---
+claim the craft, flag the formal object as open (feeds \S5.4).
+\item \open Worked example: rLLC on attention heads (arXiv:2410.02984)
+--- reproduce or report; confirm it doubles as the \S5 interpretability
+bridge.
+\end{itemize}
+
+% ============================================================================
+\section{Section 5 Needs}
+% ============================================================================
+
+\begin{itemize}[itemsep=4pt]
+\item \open Phase-transition computation on a DL model (may be novel; or
+borrow conceptually from the applied-stats binomial mixture with an
+explicit bridge).
+\item \open Quasi-singular RLCT-growth claim: established, emerging, or
+conjecture? Literature check before it is stated as delivered.
+\item \open The specification-gap program's ancestor: pin the citation
+for the optimizer that targets the free energy and demonstrably selects
+lower-$\lambda$ strata (goals \S5's ``explicit ancestor already in the
+literature''); confirm what it demonstrates vs.\ what the program
+conjectures. The hyperparameter-dependence of final $\lambda$ within a
+single algorithm is flagged in goals as an open experiment --- record it
+here as a candidate follow-up, not a paper dependency.
+\item \open Flag sketches, one credible symmetry argument each:
+activation/representation (rotations/scalings of latent directions;
+manifold-hypothesis and regular-base-flow breakage); policy/value
+(behavior-preserving reparameterizations; NPG inheriting the
+local-differential failure); interpretability (non-unique circuits,
+superposition as degeneracy on the singular set). Bar: ``yes, that
+probably extends,'' not proof. Interpretability is the developed flag
+(half-page); the other two compress to a credible sentence each.
+\item \open Claim 3 (the $n$-revelation) strong form: lands here as open
+question if the \S2 literature check (C4) does not clear it.
+\item \open \S5.4 horizon: the stratified-space sampler direction ---
+one or two citations that physics handles potential functions on
+singular configuration spaces (to make the ``machinery exists
+elsewhere'' point credible) without claiming an MCMC literature that
+does not exist.
+\end{itemize}
+
+% ============================================================================
+\section{Cross-Cutting}
+% ============================================================================
+
+\begin{itemize}[itemsep=4pt]
+\item \open Bibliography pass: primary sources for every audit-table row
+(the table currently cites from memory plus secondary confirmation).
+\item \open The companion blog extraction from \S1 (convert forward
+references; end on the open question).
+\item \open Tone pass against framing decision (i): the provocative
+register only where the diagnosis tag is ``geometry'' AND a better
+computable tool exists today (singular VI pending C2; BIF); the humble
+register where the tag is ``computation.''
+\item \open Notation convention with the applied-stats sibling: this
+paper writes $\lambda$ replaces $p/2$; the sibling writes $d/2$. Decide
+pair-wise ($p$ avoids the collision with data dimension) and apply to
+whichever document yields.
+\item \open Phrase-bank continuity: ``how much room the level sets
+leave'' is the walk-away/\S2 phrasing that \S3's $\lambda$ definition
+must echo verbatim when the volume scaling
+$\mathrm{Vol}\{K \le \varepsilon\} \sim c\,\varepsilon^{\lambda}
+(-\log\varepsilon)^{m-1}$ is introduced (``the room shrinks like
+$\varepsilon^{\lambda}$''). A writing-consistency check, not research.
+\item \resolved{Adam guarantees scoping (was: ``verify stochastic
+optimization guarantees assume non-degenerate Hessian''): the accurate
+statement is that nonconvex guarantees deliver $\epsilon$-stationarity
+under smoothness assumptions and are silent on the singular questions;
+stronger promises invoke PL/strong convexity. The old item's framing was
+wrong and is retired; citation selection remains under \S1 Pillar 4
+(placement now \S4.2).}
+\end{itemize}
+
+\end{document}

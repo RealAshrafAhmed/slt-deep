@@ -1,0 +1,36 @@
+["sltp-paper:pdf-compile-goals"]
+description = "Compile goals.tex to PDF"
+run = '''
+set -euo pipefail
+./scripts/publish.sh compile slt-in-pracitce/paper/prep/goals
+'''
+
+["sltp-paper:pdf-compile-analysis"]
+description = "Compile analysis.tex to PDF"
+run = '''
+set -euo pipefail
+./scripts/publish.sh compile slt-in-pracitce/paper/prep/analysis
+'''
+
+["sltp-paper:pdf-compile-needs"]
+description = "Compile needs.tex to PDF"
+run = '''
+set -euo pipefail
+./scripts/publish.sh compile slt-in-pracitce/paper/prep/needs
+'''
+
+["sltp-paper:pdf-compile-all-prep"]
+description = "Compile all prep documents to PDFs"
+run = '''
+set -euo pipefail
+mise run sltp-paper:pdf-compile-goals
+mise run sltp-paper:pdf-compile-analysis
+mise run sltp-paper:pdf-compile-needs
+'''
+
+["sltp-paper:clean-prep"]
+description = "Clean build artifacts from prep directory"
+run = '''
+set -euo pipefail
+./scripts/publish.sh clean slt-in-pracitce/paper/prep
+'''

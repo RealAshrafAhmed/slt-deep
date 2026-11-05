@@ -1,0 +1,620 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\geometry{margin=1in}
+
+% ---------------------------------------------------------------------------
+% Environments
+% ---------------------------------------------------------------------------
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{assumption}{Assumption}
+\renewcommand{\theassumption}{A\arabic{assumption}}
+\newtheorem{example}[definition]{Example}
+\theoremstyle{plain}
+\newtheorem{theorem}[definition]{Theorem}
+\newtheorem{proposition}[definition]{Proposition}
+\theoremstyle{remark}
+\newtheorem{remark}[definition]{Remark}
+
+% Claims cited from memory and not yet checked against the source.
+\newcommand{\verify}[1]{\textcolor{red}{[verify: #1]}}
+
+% ---------------------------------------------------------------------------
+% Notation
+% ---------------------------------------------------------------------------
+\newcommand{\X}{\mathcal{X}}
+\newcommand{\Y}{\mathcal{Y}}
+\newcommand{\Z}{\mathcal{Z}}
+\newcommand{\W}{W}
+\newcommand{\Prob}{\Delta}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\KL}{\mathrm{KL}}
+\newcommand{\TV}{\mathrm{TV}}
+\newcommand{\R}{\mathbb{R}}
+
+\title{\textbf{The Mathematical Structure of Learning Problems}\\[6pt]
+\large From records to the population loss}
+\author{Working draft}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\noindent\emph{Part I draft. Every statement is a definition, a labelled
+assumption, a cited theorem, or an example. Claims marked
+\verify{\dots} are cited from memory and must be checked against the
+source; see \texttt{verification.md}.}
+
+% ============================================================================
+\part{Framing}
+% ============================================================================
+
+% ============================================================================
+\section{The problem}\label{sec:problem}
+% ============================================================================
+
+A learning problem starts with something we want a machine to do, and
+a way of scoring how well it is done. Both exist before any data is
+collected.
+
+\begin{definition}[Decision problem]
+A \emph{decision problem} consists of a set $A$ of actions, a set $\Y$
+of outcomes, and a bounded utility $u(a,y)$ for taking action $a$ when
+the outcome is $y$. The action is chosen after seeing an input $x$.
+\end{definition}
+
+\begin{example}
+Classifying an image: $A=\Y$ is the set of labels and $u(a,y)=1$ if
+$a=y$, else $0$. Screening for a tumour: $u$ penalises a missed tumour
+more than a false alarm. Driving: $a$ is a steering command and $u$
+scores the resulting trajectory.
+\end{example}
+
+Problems differ in how directly the utility is known.
+\begin{itemize}[nosep]
+\item \emph{Acting}: the actions and their consequences are specified
+  (steering, treating a patient).
+\item \emph{Predicting with a specified utility}: the action is a guess
+  of the outcome and the utility scores being right, with possibly
+  unequal costs for different errors (the tumour example).
+\item \emph{Predicting with the utility left open}: in science one
+  wants to know how the outcome is distributed because the uses come
+  later; understanding cancer is valued for the drugs it will help to
+  develop. Section~\ref{sec:utility} shows that this case leads to the
+  KL loss.
+\end{itemize}
+In every case the learner is judged by the regret of its wrong
+predictions or actions. The two cultures of statistical modelling
+\cite{breiman2001}, parametric models whose parameters have scientific
+meaning and flexible algorithmic models, solve the same problem; they
+differ in the choice of model (Section~\ref{sec:models}). Two
+refinements: when a parameter is itself the answer (an effect size used
+to choose a dose), it must be identifiable, which is where the
+structure studied in Part~II matters; and predicting the effect of an
+intervention is regret under a different distribution from the one
+that generated the records \cite{pearl2009}, which is outside the
+scope of this note.
+
+The utility is part of the problem and fixes which outcome matters. It
+does not fix which inputs to record. That depends on what is already
+known about the phenomenon: with little knowledge, one may record
+inputs that carry almost no information about the outcome, and the
+regularity of the records (Section~\ref{sec:regularity}) will then be
+small or unrelated to the phenomenon of interest. When something is
+known, experiments can be designed to maximise the expected information
+the records carry \cite{lindley1956}.
+
+% ============================================================================
+\section{Records, and probability as the language}\label{sec:records}
+% ============================================================================
+
+What the machine receives are not the quantities of the world but
+\emph{records} of them.
+
+\begin{definition}[Observable, measurement, record]
+An \emph{observable} $Z$ takes values in a space $\Z$ (often a
+continuum, e.g.\ $\R^m$). A \emph{measurement system} is a Markov kernel
+$\kappa(\,\cdot \mid z)$ from $\Z$ to a set of readings: it returns a
+(possibly noisy) reading of $z$. An \emph{encoding} $e$ maps readings to
+values in a set $\X$. A \emph{record} is $X = e(\text{reading})$. Because
+every recorded value has finite precision, $\X$ is a finite set.
+\end{definition}
+
+Two facts about records are not assumptions: measurement devices
+return different readings for the same observable (noise), and the
+world varies in ways the records do not capture (hidden variables), so
+equal inputs can be recorded with different outputs. Something must
+describe this variability, and we choose probability.
+
+\begin{remark}[Probability is a choice]
+Probability is one of several mathematical languages for uncertainty,
+and the most developed one. Arguments that it is forced by
+coherence or by axioms of plausible reasoning are de Finetti's
+coherence argument \cite{kadane2011} and Cox's theorem
+\cite{vanhorn2003}; alternatives (imprecise probabilities, belief
+functions, possibility measures, plausibility measures) and the
+objections to these arguments are surveyed in \cite{halpern2017}. We
+adopt probability for its mathematical development, not because the
+alternatives are refuted.
+\end{remark}
+
+\begin{assumption}[Probabilistic representation]\label{as:prob}
+There is a probability space $(\Omega,\mathcal{F},P)$ on which every
+observable is a random variable, and measurement and encoding are
+measurable. The records $X_1, X_2, \dots$ are then random variables
+with values in $\X$.
+\end{assumption}
+
+The law of the records needs no further assumption.
+
+\begin{proposition}[The law of the records exists]
+Under Assumption~\ref{as:prob}, the record sequence has a law
+$q_{1:\infty} = P\circ(X_1,X_2,\dots)^{-1}$ on $\X^{\mathbb N}$, and
+every finite-sample law $q(x_{1:n})$ is one of its marginals.
+Equivalently, any consistent family of finite-dimensional laws on the
+finite set $\X$ defines a unique such law (Kolmogorov extension
+\cite{kallenberg2002}).
+\end{proposition}
+
+\begin{remark}[Existence is free; stability is not]
+Some probability law fits any data whatsoever (a point mass on the
+observed sequence is one). Existence of $q_{1:\infty}$ therefore says
+nothing about the world. The substantive question is whether the
+\emph{same} law governs records not yet seen. That is what the
+sampling symmetry of Section~\ref{sec:sampling} addresses.
+\end{remark}
+
+\begin{remark}[Time and actions]
+The records generate a natural filtration
+$\mathcal F_t = \sigma(X_1,\dots,X_t)$. A prediction of $X_{t+1}$ must
+be $\mathcal F_t$-measurable (it may use only the past). If the learner
+acts, the actions are recorded as part of $X_t$ and must also depend
+only on past records; otherwise inference about the environment from
+the records is not valid \cite{rubin1976}. For an unordered batch with
+no actions the filtration imposes nothing.
+\end{remark}
+
+% ============================================================================
+\section{Sampling symmetry}\label{sec:sampling}
+% ============================================================================
+
+\begin{definition}[Exchangeability]
+Records $X_1,\dots,X_n$ are \emph{exchangeable} if their law is
+unchanged by every permutation $s$ of $\{1,\dots,n\}$:
+$q(x_1,\dots,x_n) = q(x_{s(1)},\dots,x_{s(n)})$. An infinite sequence
+is exchangeable if every finite initial segment is. For supervised
+records $X_i=(\mathrm{input}_i,\mathrm{output}_i)$ the pairs are
+permuted together.
+\end{definition}
+
+\begin{theorem}[de Finetti; Hewitt--Savage \cite{hewitt1955,kallenberg2005}]
+\label{thm:definetti}
+Let $X_1, X_2,\dots$ be an infinite exchangeable sequence in a
+standard Borel space $\X$. There is a unique probability measure $\mu$
+on $\Prob(\X)$ such that for every $n$
+\[
+q(X_1\in A_1,\dots,X_n\in A_n) = \int_{\Prob(\X)} \prod_{i=1}^n Q(A_i)\,\mu(dQ).
+\]
+Moreover the empirical measures $\frac1n\sum_{i\le n}\delta_{X_i}$
+converge almost surely to a random measure $Q$ with law $\mu$, and
+conditionally on $Q$ the $X_i$ are i.i.d.\ with law $Q$.
+\end{theorem}
+
+\begin{definition}[The population distribution]
+The realised value of $Q$ is written $q$ and called the
+\emph{population distribution}. Conditionally on it, the records are
+i.i.d.\ from $q$. The mixing measure $\mu$ is a prior on $\Prob(\X)$.
+\end{definition}
+
+So the textbook opening ``$X_1,\dots,X_n$ i.i.d.\ from $q$'' is a
+\emph{consequence}: of Assumption~\ref{as:prob} and of exchangeability,
+a symmetry stated about records.
+
+\begin{theorem}[Finite exchangeability \cite{diaconis1980finite}]
+If $X_1,\dots,X_n$ are exchangeable, the law of $(X_1,\dots,X_k)$ is
+within total variation $2ck/n$ of a mixture of i.i.d.\ laws when $\X$
+has $c$ elements, and within $k(k-1)/n$ in general.
+\verify{norm convention for total variation}
+\end{theorem}
+
+A finite exchangeable sequence need not be a mixture of i.i.d.\ laws
+(draw two balls without replacement from an urn holding one red and
+one blue). The infinite theorem is what is used when the sample size
+is sent to infinity; the finite one measures the error when the
+population is finite.
+
+\begin{remark}[Exchangeability can be designed and tested]
+Random sampling, randomised collection order and shuffling make the
+recorded sequence exchangeable by construction. Exchangeability can be
+tested, though only rejected, never confirmed; conformal test
+martingales give tests that are valid at every sample size
+\cite{vovk2003testing}. Two different claims must not be confused:
+exchangeability \emph{within} a dataset (which shuffling guarantees)
+and exchangeability \emph{between} training and deployment records
+(which it does not).
+\end{remark}
+
+\begin{remark}[Sequences]
+When a record is a whole path (a document, an episode), exchangeability
+is a statement about paths and Theorem~\ref{thm:definetti} gives a law
+on path space. When there is a single long path, the corresponding
+symmetry is \emph{stationarity} (invariance under time shift); a
+stationary process is a mixture of ergodic ones, and along one path of
+an ergodic process time averages converge to expectations (Birkhoff)
+\cite{kallenberg2002}. In both regimes one realisation suffices to
+identify the law in the limit.
+\end{remark}
+
+% ============================================================================
+\section{Regularity and noise}\label{sec:regularity}
+% ============================================================================
+
+With $q$ in hand we can say what in the records is learnable. Records
+are finite-valued, so all entropies below are finite.
+
+\begin{proposition}[Decomposition of output uncertainty \cite{cover2006}]
+For a record $(X,Y)\sim q$,
+\[
+\underbrace{H(Y)}_{\text{total}} \;=\; \underbrace{I(X;Y)}_{\text{regularity}} \;+\; \underbrace{H(Y\mid X)}_{\text{noise}} .
+\]
+\end{proposition}
+
+\begin{definition}[Regularity and noise]
+$I(X;Y)$, the information the input carries about the output, is the
+\emph{regularity} of the problem; $H(Y\mid X)$ is its \emph{noise}. At
+one extreme $I(X;Y)=0$: the input is useless and the best predictor is
+the marginal $q(y)$ (which is not uniform guessing). At the other
+$H(Y\mid X)=0$: the output is a deterministic function of the input.
+\end{definition}
+
+The same split holds for a single long sequence. For a stationary
+process with block entropy $H(X_{1:L})$,
+\[
+H(X_{1:L}) \approx E + h\,L \qquad (L\to\infty),
+\]
+where $h$ is the entropy rate (noise per step) and the \emph{excess
+entropy} $E = I(\text{past};\text{future})$ is the regularity
+\cite{crutchfield2003,bialek2001}.
+
+\begin{remark}[Regularity is compressibility]
+By the Kraft inequality, a distribution $p$ on $\X$ is a code, and
+$-\log_2 p(x)$ is the length of $x$ in bits \cite{cover2006}. Predicting
+well under log loss and compressing well are therefore the same
+thing, and regularity is what a code can exploit. For a single finite
+dataset the same split is made by Kolmogorov's structure function:
+total description length equals the length of a model plus the length
+of the data's index within the model, and the data are incompressible
+given a sufficient model \cite{gacs2001,vereshchagin2004}. Shannon
+entropy is the average of Kolmogorov complexity
+\cite{grunwald2003}. These algorithmic notions are uncomputable and
+defined up to additive constants; we cite them as the rigorous form of
+the idea, not as tools.
+\end{remark}
+
+\begin{remark}[Regularity is relative]
+Regularity is always relative to a split: input versus output, or
+past versus future. There is no absolute amount of regularity in a
+dataset independent of what is to be predicted from what.
+\end{remark}
+
+% ============================================================================
+\section{World symmetries produce regularity}\label{sec:world}
+% ============================================================================
+
+Sampling symmetry is about the order of records. A second kind of
+symmetry is about the world itself.
+
+\begin{definition}[World symmetry]
+Let a group $G$ act on inputs, and (through a representation $\rho$) on
+outputs. The problem is \emph{invariant} if $q(y \mid g\cdot x) =
+q(y\mid x)$ and \emph{equivariant} if $q(\rho(g)\, y \mid g\cdot x) =
+q(y\mid x)$, for all $g\in G$.
+\end{definition}
+
+\begin{remark}
+World symmetries are usually properties of the conditional $q(y\mid
+x)$, not of the marginal $q(x)$: whether an image shows a cat does not
+depend on its orientation, but recorded photographs are mostly upright.
+A symmetry of observables survives into records only if measurement
+and encoding are equivariant; a pixel grid keeps only the four
+right-angle rotations of the plane.
+\end{remark}
+
+A \emph{maximal invariant} $M$ is a function on inputs that is constant
+on each orbit $\{g\cdot x: g\in G\}$ and takes different values on
+different orbits.
+
+\begin{theorem}[Invariance through a maximal invariant \cite{bloemreddy2020}]
+\label{thm:noise-outsourcing}
+Let $G$ be compact and act measurably on standard Borel spaces. Then
+$q(y\mid x)$ is $G$-invariant if and only if $Y = f(\eta, M(X))$
+almost surely for some measurable $f$ and some noise $\eta$ uniform on
+$[0,1]$ and independent of $X$. \verify{exact hypotheses and theorem
+number}
+\end{theorem}
+
+\begin{proposition}[Regularity lives on the quotient]
+If $q(y\mid x)$ is $G$-invariant, then $Y$ and $X$ are conditionally
+independent given $M(X)$, and so
+\[
+I(X;Y) = I(M(X);Y).
+\]
+\end{proposition}
+\noindent This is the chain rule for mutual information applied to
+Theorem~\ref{thm:noise-outsourcing}: $I(X;Y) = I(M(X);Y) + I(X;Y\mid
+M(X))$ and the second term is zero. All of the regularity is carried
+by \emph{which orbit} the input lies in; \emph{where} in the orbit it
+lies carries none.
+
+This is the precise sense in which symmetry produces regularity. The
+converse is false: a deterministic trend is regular without any group
+behind it. Building a known symmetry into a model is therefore a way to
+spend model capacity only on the part of the input that carries
+regularity, and doing so provably helps learning in settings where it
+has been analysed \cite{elesedy2021}. \verify{scope of the strict
+generalisation benefit}
+
+For exchangeable records the same structure is fully explicit. The
+orbit of a sequence under permutations is its \emph{type class} (all
+sequences with the same empirical distribution); given its type, an
+exchangeable sequence is uniform on its type class, and the type class
+has about $2^{nH}$ elements, $H$ being the entropy of the type
+\cite{csiszar1998}. The empirical distribution is the regularity and
+the order is noise.
+
+% ============================================================================
+\section{Models}\label{sec:models}
+% ============================================================================
+
+A model is a family of candidate conditional distributions, indexed by
+finitely many numbers.
+
+\begin{definition}[Statistical model]
+A \emph{statistical model} is a set $\W\subset\R^d$ of parameters
+together with a map $w \mapsto p(\,\cdot\mid x, w)$ assigning to each
+$w$ a conditional distribution of outputs given inputs. In practice the
+map is a composition: a \emph{parametrisation} $w\mapsto f_w$ (the
+architecture) followed by an \emph{output map} from $f_w(x)$ to a
+distribution (e.g.\ a softmax). The \emph{image} of the model is the set
+of conditional distributions it reaches.
+\end{definition}
+
+\begin{definition}[Realisability, fibres, identifiability]
+The model is \emph{realisable} if $q(\,\cdot\mid x)$ is in its image
+(for $q$-almost every $x$). The \emph{fibre} of $w$ is the set of
+parameters giving the same conditional distribution as $w$ for
+$q$-almost every input. The model is \emph{identifiable} if every fibre
+is a single point.
+\end{definition}
+
+Fibres depend on the input distribution: two parameters may agree on
+every input that occurs and disagree elsewhere.
+
+\begin{definition}[Regular model]
+A model is \emph{regular} if it is identifiable, the map
+$w\mapsto p(\,\cdot\mid x,w)$ is smooth, and the Fisher information
+matrix
+\[
+I(w) = \E\big[\nabla_w \log p(Y\mid X,w)\,\nabla_w \log p(Y\mid X,w)^{\top}\big]
+\]
+is positive definite at every $w$ \cite{watanabe2009}. A model that is
+not regular is \emph{singular}.
+\end{definition}
+
+\begin{example}
+The Gaussian model $\W=\R\times(0,\infty)$, $(m,s)\mapsto N(m,s^2)$, is
+regular. The model $(a,b,s)\mapsto N(ab,s^2)$ has the same image and is
+singular: at $a=b=0$ the fibre is the cross $\{a=0\}\cup\{b=0\}$ and
+the Fisher information is degenerate. Singularity is a property of the
+map, not of the set of distributions it reaches.
+\end{example}
+
+A good model is one whose image comes close to $q$, that is, one that
+captures the regularity of Section~\ref{sec:regularity}. To say how
+close, we need to say what the model will be used for.
+
+% ============================================================================
+\section{Utility, and why the loss is KL}\label{sec:utility}
+% ============================================================================
+
+We return to the decision problem of Section~\ref{sec:problem}. Given
+input $x$, the best action under a distribution $p(\,\cdot\mid x)$ is
+$a_p(x) \in \arg\max_{a} \E_{p(y\mid x)}[u(a,y)]$.
+The action we want is $a_q(x)$, which depends only on the utility and
+on the unknown $q$. Acting with a model means acting with $a_p(x)$ in
+its place, and the utility judges the model by the resulting loss of
+expected utility (the \emph{regret}).
+
+\begin{proposition}[KL controls every bounded utility]\label{prop:regret}
+If $u$ takes values in an interval of length $R$, then
+\[
+\E_{q(y\mid x)}\big[u(a_q(x),y)\big] - \E_{q(y\mid x)}\big[u(a_p(x),y)\big]
+\;\le\; R\,\sqrt{2\,\KL\big(q(\cdot\mid x)\,\|\,p(\cdot\mid x)\big)} .
+\]
+\end{proposition}
+\noindent For any action, the expected utilities under $q$ and $p$
+differ by at most $R\cdot\TV(q,p)$. Adding and subtracting expected
+utilities under $p$, and using that $a_p$ is optimal under $p$, the
+regret is at most $2R\cdot\TV$. Pinsker's inequality
+$\TV\le\sqrt{\KL/2}$ \cite{cover2006} gives the bound. Averaging over
+inputs and applying Jensen's inequality, the expected regret is at most
+$R\sqrt{2\,\E_X \KL(q(\cdot\mid X)\,\|\,p(\cdot\mid X))}$.
+
+So a model with small KL to $q$ is good for \emph{every} bounded
+decision problem at once, including ones not yet specified. This is the
+situation of predicting with the utility left open
+(Section~\ref{sec:problem}), where the eventual uses are unknown. For
+that case there is also a direct utility: state a distribution $p$ and
+receive $\log p(y)$ when $y$ occurs (the logarithmic score). Its
+expected regret is exactly $\KL(q\,\|\,p)$, by Gibbs' inequality, and
+under smoothness and locality conditions it is the only utility for
+stating distributions that rewards honesty; Bernardo proposed it as the
+utility of pure scientific inference \cite{bernardo1979}. \verify{exact uniqueness
+conditions in Bernardo 1979}
+
+\begin{remark}[A fixed task may need less than $q$]
+A particular utility often depends on only part of $q$. With the 0--1
+utility of classification, $a_q(x)$ is the most probable label, so a
+model whose most probable label always matches $q$'s is optimal for
+that task however large its KL loss. This gives two strategies. A
+\emph{task-specific} learner optimises the given utility directly and
+models only what it needs (Vapnik's advice not to solve a harder
+problem than the one posed). A \emph{general-purpose} learner models
+all of $q$ under KL and, by Proposition~\ref{prop:regret}, serves every
+bounded utility at once, including utilities not yet specified. KL is
+the right loss when the task is not fixed in advance.
+\end{remark}
+
+\begin{definition}[Population loss]
+For a model $p(\,\cdot\mid x,w)$, the \emph{population loss} and the
+\emph{KL loss} are
+\[
+L(w) = \E_q\big[-\log p(Y\mid X,w)\big], \qquad
+K(w) = \E_X\,\KL\big(q(\cdot\mid X)\,\|\,p(\cdot\mid X,w)\big).
+\]
+\end{definition}
+
+\begin{proposition}[KL is the regularity not captured]
+\[
+L(w) = H(Y\mid X) + K(w), \qquad\text{equivalently}\qquad
+H(Y) - L(w) = I(X;Y) - K(w).
+\]
+\end{proposition}
+\noindent The first identity is the definition of KL; the second
+subtracts it from $H(Y)=I(X;Y)+H(Y\mid X)$. The left side of the second
+is how much better the model does than knowing nothing about the input
+beyond the output frequencies. It equals the regularity minus the KL
+loss. A model captures all the regularity exactly when $K(w)=0$, and
+then its loss is the noise $H(Y\mid X)$, which no model can beat.
+
+Neither $L$ nor $K$ can be computed, since both involve $q$. What can
+be computed from records is the \emph{empirical loss}
+\[
+L_n(w) = -\frac1n \sum_{i=1}^n \log p(y_i\mid x_i,w),
+\]
+which converges to $L(w)$ for each $w$ by the strong law of large
+numbers applied conditionally on $q$. Since $L = H(Y\mid X) + K$ and
+$H(Y\mid X)$ does not depend on $w$, minimising $L$ and minimising $K$
+are the same problem. For
+sequences, the chain rule writes the log-likelihood of a path as a sum
+of next-step conditional log-likelihoods, so the same formula holds
+with each record a step given its history.
+
+This is the standard setup of statistical learning: records i.i.d.\
+from $q$, a model $w\mapsto p(\,\cdot\mid x,w)$, and the loss $K$
+estimated by $L_n$. Part I has shown where each piece comes from.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+Ingredient & Status & Where \\
+\midrule
+task and utility $u$ & given & \S\ref{sec:problem} \\
+measurement system, encoding & chosen & \S\ref{sec:records} \\
+probability as the language & chosen & \S\ref{sec:records} \\
+probability space (A1) & assumed & \S\ref{sec:records} \\
+law of the records $q_{1:\infty}$ & follows from A1 & \S\ref{sec:records} \\
+exchangeability / stationarity & assumed; designable, testable & \S\ref{sec:sampling} \\
+population distribution $q$ & follows (de Finetti) & \S\ref{sec:sampling} \\
+regularity $I(X;Y)$, noise $H(Y\mid X)$ & properties of $q$ & \S\ref{sec:regularity} \\
+world symmetry $G$ & assumed (domain knowledge) & \S\ref{sec:world} \\
+model $w\mapsto p(\cdot\mid x,w)$ & chosen & \S\ref{sec:models} \\
+realisability & assumed or not & \S\ref{sec:models} \\
+loss $K$ & follows from the utility & \S\ref{sec:utility} \\
+$K$ replaced by $L_n$ & approximation (statistical) & \S\ref{sec:utility} \\
+\bottomrule
+\end{tabular}
+\caption{Ledger for Part I.}
+\end{table}
+
+% ============================================================================
+\begin{thebibliography}{99}
+% ============================================================================
+
+\bibitem{bernardo1979} J.~M.~Bernardo. Expected information as expected
+utility. \emph{Annals of Statistics} 7(3), 1979.
+
+\bibitem{bialek2001} W.~Bialek, I.~Nemenman, N.~Tishby. Predictability,
+complexity, and learning. \emph{Neural Computation} 13, 2001.
+
+\bibitem{bloemreddy2020} B.~Bloem-Reddy, Y.~W.~Teh. Probabilistic
+symmetries and invariant neural networks. \emph{JMLR} 21, 2020.
+
+\bibitem{breiman2001} L.~Breiman. Statistical modeling: the two cultures.
+\emph{Statistical Science} 16(3), 2001.
+
+\bibitem{cover2006} T.~M.~Cover, J.~A.~Thomas. \emph{Elements of
+Information Theory}, 2nd ed. Wiley, 2006.
+
+\bibitem{crutchfield2003} J.~P.~Crutchfield, D.~P.~Feldman. Regularities
+unseen, randomness observed: levels of entropy convergence.
+\emph{Chaos} 13, 2003.
+
+\bibitem{csiszar1998} I.~Csisz\'ar. The method of types. \emph{IEEE
+Trans.\ Information Theory} 44(6), 1998.
+
+\bibitem{diaconis1980finite} P.~Diaconis, D.~Freedman. Finite
+exchangeable sequences. \emph{Annals of Probability} 8(4), 1980.
+
+\bibitem{elesedy2021} B.~Elesedy, S.~Zaidi. Provably strict
+generalisation benefit for equivariant models. \emph{ICML}, 2021.
+
+\bibitem{gacs2001} P.~G\'acs, J.~Tromp, P.~Vit\'anyi. Algorithmic
+statistics. \emph{IEEE Trans.\ Information Theory} 47(6), 2001.
+
+\bibitem{grunwald2003} P.~Gr\"unwald, P.~Vit\'anyi. Kolmogorov complexity
+and information theory, with an interpretation in terms of questions
+and answers. \emph{J.\ Logic, Language and Information} 12, 2003.
+
+\bibitem{halpern2017} J.~Y.~Halpern. \emph{Reasoning About Uncertainty},
+2nd ed. MIT Press, 2017.
+
+\bibitem{hewitt1955} E.~Hewitt, L.~J.~Savage. Symmetric measures on
+Cartesian products. \emph{Trans.\ AMS} 80, 1955.
+
+\bibitem{kadane2011} J.~B.~Kadane. \emph{Principles of Uncertainty}.
+Chapman \& Hall/CRC, 2011.
+
+\bibitem{kallenberg2002} O.~Kallenberg. \emph{Foundations of Modern
+Probability}, 2nd ed. Springer, 2002.
+
+\bibitem{kallenberg2005} O.~Kallenberg. \emph{Probabilistic Symmetries
+and Invariance Principles}. Springer, 2005.
+
+\bibitem{lindley1956} D.~V.~Lindley. On a measure of the information
+provided by an experiment. \emph{Annals of Mathematical Statistics}
+27(4), 1956.
+
+\bibitem{pearl2009} J.~Pearl. \emph{Causality}, 2nd ed. Cambridge
+University Press, 2009.
+
+\bibitem{rubin1976} D.~B.~Rubin. Inference and missing data.
+\emph{Biometrika} 63(3), 1976.
+
+\bibitem{vanhorn2003} K.~S.~Van Horn. Constructing a logic of plausible
+inference: a guide to Cox's theorem. \emph{Int.\ J.\ Approximate
+Reasoning} 34, 2003.
+
+\bibitem{vereshchagin2004} N.~Vereshchagin, P.~Vit\'anyi. Kolmogorov's
+structure functions and model selection. \emph{IEEE Trans.\
+Information Theory} 50(12), 2004.
+
+\bibitem{vovk2003testing} V.~Vovk, I.~Nouretdinov, A.~Gammerman. Testing
+exchangeability on-line. \emph{ICML}, 2003.
+
+\bibitem{watanabe2009} S.~Watanabe. \emph{Algebraic Geometry and
+Statistical Learning Theory}. Cambridge University Press, 2009.
+
+\end{thebibliography}
+
+\end{document}

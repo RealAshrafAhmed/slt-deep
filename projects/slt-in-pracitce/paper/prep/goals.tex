@@ -1,0 +1,678 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{amsmath}
+
+\geometry{margin=1in}
+
+\title{\textbf{Singular Learning Theory for Applied Deep Learning}\\[8pt]
+\large Paper Goals (v5)}
+\author{Working Document}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\noindent\emph{Companion to the applied-statistics SLT paper: same arc
+(urgency $\to$ geometric picture $\to$ formalize $\to$ deliver $\to$
+conclude and open a horizon), reorganized for a deep-learning audience.
+Open items live in the needs document; this document states only what is
+settled, and marks contingent phrasing inline with [contingent: Cn]
+tags whose fallbacks live in \S6.}
+
+% ============================================================================
+\section{Primary Goal}
+% ============================================================================
+
+Deep learning models are singular: the minimum of the loss is not a
+point but a positive-dimensional set, and the geometry of the loss
+around that set --- manufactured by the architecture and the data
+generating process --- governs what the practitioner actually cares
+about. Singular learning theory is the mathematics of exactly this
+situation: mature, increasingly computable, and still largely unknown
+to the practitioners whose models it describes. We write this paper to
+communicate SLT to the deep learning practitioner: the correct
+geometric picture, its consequences for the tools they use daily, and
+the toolkit now being built on it.
+
+This paper aims to:
+
+\begin{enumerate}[nosep, label=(\roman*)]
+\item \textbf{Establish the stakes:} before the communication begins,
+      show the reader why it is addressed to them --- at two levels.
+      Level 1: the set sits under the numbers they routinely report
+      (uncertainty, attribution, complexity, selection); the tools that
+      assume it away fail at their own stated jobs and mask the failure
+      behind plausible numbers, structurally wrong where checkable
+      [contingent: C1]. Level 2: the geometry around the set reaches
+      their practice even where nothing is wrong --- it is why some
+      hyperparameters work and others don't, why some algorithms land
+      better than others; training silently selects from the set
+      without saying so. Not a theoretical curiosity: their
+      architectures, their numbers, their conclusions.
+\item \textbf{Correct the mental picture:} replace the flat-valley
+      intuition with the singular one --- a set the objective cannot
+      choose from and training silently does, and the geometry around
+      it: how the loss vanishes along it, how the posterior conforms to
+      that structure rather than to any Gaussian, how sample size
+      decides what is resolved of it, and the invariant ($\lambda$)
+      that summarizes it --- so the reader understands \emph{why} the
+      failures occur, \emph{when} to expect them, and \emph{what
+      question} each of their numbers actually answers.
+\item \textbf{Recast existing tools, provide new ones, and mark what
+      is established versus open.} Show why the tools the reader
+      already trusts --- cross-validation, Adam, weight decay --- work,
+      for singular-geometric reasons the field has misnamed; hand over
+      the singular-first toolkit; and be honest about how mature each
+      piece is, at the reader's scale.
+\item \textbf{Flag the extension of singular geometry beyond the
+      loss.} For the same reasons the loss is singular, one should
+      expect activation and representation spaces, and policy/value
+      spaces, to be singular, and interpretability to be governed by
+      degeneracy on the singular set. Explicitly conjectural: one
+      developed flag (interpretability), two credible sketches
+      (activations, policies).
+\end{enumerate}
+
+The reader should finish thinking: ``The minimum I found was a set,
+and what I actually care about --- generalization, uncertainty, model
+selection --- is governed by the geometry around that set, not by my
+parameter count. My tools assumed it away, and my training chose from
+it without telling me. Now I understand why my numbers misbehave, what
+question each one actually answers, and how to measure the geometry
+itself --- and I know where the current limits are, so I won't
+overreach.''
+
+% ============================================================================
+\section{What the Reader Walks Away With}
+% ============================================================================
+
+\begin{enumerate}[label=\textbf{\arabic*.}, leftmargin=*, itemsep=6pt]
+
+\item \textbf{The diagnosis: a missing language, not poor judgment.}
+The reader sees that the field has met the phenomena --- mode
+connectivity, degenerate Hessians, mergeable checkpoints --- and even
+mapped the set they trace out, without a language for the geometry that
+governs them: how the loss vanishes around the set, and how the
+posterior and sample size answer to that. And the reader can name the
+cost of that gap: wrong results, misaimed fixes, years of regularizing
+instead of redesigning, and folklore where there should be theory.
+
+\item \textbf{One cause behind the failures, the folklore, and much
+that works.}
+The scattered failures are not separate bugs, and the familiar
+frustrations --- the damping constant no one can justify, sharpness
+measures that disagree after a reparameterization, checkpoints that
+average into a working model --- are not separate mysteries: one
+geometry produces them, explains why the trusted tools succeed at their
+jobs, and names what training silently chooses.
+
+\item \textbf{The masking.}
+The reader understands why they never noticed: the repairs were aimed
+at stability and delivered it; every regularity-restoring repair
+returns a plausible number. The failure mode of singular geometry in
+deep learning is silence, not error messages.
+
+\item \textbf{The geometric picture without the algebra.}
+Taught as a working intuition, in the order a course would: continuous
+symmetry and overparameterization force the minimizers to be a
+positive-dimensional set; the flat thing the practitioner finds is a
+\emph{normal crossing} --- intersecting sheets, hyperbolic
+(product-vanishing) level sets --- not a wide valley; the crossing is
+built of strata, and the loss vanishes to different orders along and
+across them, which is where the consequences live. And the reader can
+probe geometry they cannot plot: eigenspectra, transverse slices, the
+posterior on the strata.
+
+\item \textbf{The framework, and the lens it grounds.}
+Watanabe's central move in a practitioner's language: the parameter
+space is stratified, not a manifold; the blow-up transforms it to
+normal-crossing form; $\lambda$ replaces $p/2$; integral-based
+quantities survive the geometry, local-differential ones do not ---
+carried out in full rigor on an analytic microscope model, the ReLU gap
+stated, not stepped around. And the habit it installs: three kinds of
+hardness (geometric, sample-size, computational), and of any number a
+tool returns, ask \emph{which question it actually answers} --- a
+lookup, not a procedure.
+
+\item \textbf{Tools graded by the question they answer, and the choice
+made measurable.}
+Two questions, two criteria: prediction (CV/WAIC, vindicated in
+singular models where AIC/DIC provably fail) versus identifying
+structure (free energy/WBIC, consistent where CV is not). Minimization
+on a singular landscape is an incomplete specification --- the loss
+cannot prefer among loss-equivalent points; the optimizer and its
+hyperparameters silently complete the choice --- so the trusted tools
+are recast, not retired (Adam honest and silent on its choice; weight
+decay and flatness re-read), and the LLC reads out where training
+landed. The instruments --- singular VI, susceptibilities, the Bayesian
+influence function --- each graded on concept- and
+computation-maturity, at the reader's scale.
+
+\item \textbf{The horizon.}
+Phase transitions and quasi-singular phenomena as delivered
+loss-landscape consequences; the specification gap as a research
+program --- if hyperparameters do implicit geometric selection,
+principled hyperparameters become a well-posed question, with an
+ancestor in the literature; and the open unification question, with
+one developed flag (interpretability) and two credible sketches
+(activations, policies).
+
+\end{enumerate}
+
+% ============================================================================
+\section{What the Paper Is NOT}
+% ============================================================================
+
+\begin{itemize}[itemsep=4pt]
+\item A claim that ``deep learning is singular'' is novel. The
+      contribution is installing the geometry --- entered through the
+      set --- as a practitioner-facing object, the lens, the
+      two-questions recast, and the state-of-the-field report.
+\item An indictment of practice: the repairs succeeded at their
+      actual goal (stability); cross-validation is vindicated at its
+      job; Adam's guarantee is correct; the tools work through a
+      geometry their textbook stories miss.
+\item A partition of tools into safe and broken: every tool answers
+      some question validly; every tool's valid scope is narrower than
+      its routine use. The severity is not uniform: some tools are
+      wrong at their own stated job (the alarm); the rest are right at
+      a narrower job than they are given.
+\item A claim that your optimizer is broken: the claim is that its
+      choices are currently unexplained, and newly measurable.
+\item A claim that singular tools dominate everywhere: nothing here
+      improves on Adam for very large models, and that is fine; it is
+      a different axis.
+\item A claim that the reader can algorithmically classify any given
+      failure: the lens sets expectations and tags tools; it is not a
+      diagnostic procedure.
+\item A claim of full rigor on ReLU: the theorems require
+      analyticity; the paper says so plainly and works where the
+      mathematics holds.
+\item A textbook or proof-driven treatment of SLT.
+\item A survey of loss-landscape, symmetry, or representation-learning
+      literature.
+\item An argument for Bayesian over frequentist deep learning.
+\item A claim that singular geometry closes double descent or scaling:
+      it makes them askable.
+\item A purely theoretical paper: it recasts real tools and reports
+      honest maturity for those that exist.
+\end{itemize}
+
+% ============================================================================
+\section{Paper Structure Overview}
+% ============================================================================
+
+Each section is described by its \textbf{goal}, \textbf{main
+discussion}, and \textbf{close}. This is a writing guide, not a table of
+contents. The set threads the spine without reorganizing it: assumed
+away in \S1, installed in \S2, formalized in \S3, read and chosen from
+in \S4, opened as a program in \S5.
+
+\bigskip
+
+\noindent\textbf{\S1. Something Is Wrong} ($\sim$3 pages)
+
+\textbf{Goal:} Urgency, and only urgency --- and only level-1 urgency:
+tools that make claims in parameter space and are wrong at their own
+stated jobs. The governance story (level 2) is planted as a question,
+not argued here.
+
+\textbf{Main discussion:} Four escalating pillars: wrong results (VI,
+normalization's rationale) $\to$ misaimed fixes (damping,
+sharpness-seeking, isotropizing) $\to$ regularizing instead of
+redesigning $\to$ folklore in the gap. The pillar-tool audit table is
+the centerpiece, with a third gate added: \emph{every row makes a
+parameter-space claim} (posterior, uncertainty region, influence,
+curvature, parameter count). The convergence-guarantees row moves out of
+the table --- it is a level-2 item and lives in \S4.2's recast. The
+masking thesis stated as the common thread, with its honest history: the
+repairs were aimed at stability and delivered it; the failure is a
+byproduct of a success, which is why no one noticed and no one is
+accused. Cross-validation spared, deferred to \S4.
+
+\textbf{Close:} One cause, silently masked; a question the reader cannot
+yet ask precisely (what did my optimizer choose, and from what?); why
+does it all fail at once? Hand off to \S2. Source for the companion
+blog.
+
+\bigskip
+
+\noindent\textbf{\S2. Communicating the Singular Geometry} ($\sim$4
+pages)
+
+\textbf{Goal:} Answer \S1's question by installing the object --- the
+correct geometric picture without algebraic-geometry language.
+
+\textbf{Main discussion:} The two engines (symmetry via normalization,
+$f(x,\alpha\theta)=f(x,\theta)$; overparameterization). Normal crossing,
+not wide valley --- hyperbolic level sets as the empirical signature.
+Underdetermination stated where the picture makes it obvious: every
+point of the crossing is loss-equivalent, so ``minimize the loss'' does
+not finish the job; something else chooses, and \S4 names the
+instrument that reads the choice. The descent in visibility on the
+microscope FFN: plot the crossing, calibrate the probes, climb in
+dimension until only the probes survive. Then one argument in two
+halves: the high-dimensionality reckoning (the curse of dimensionality
+forecloses classical inspection --- profile likelihood, visualized
+posteriors, sampler-resolved level sets --- which is the argument for
+probes and ultimately SLT) and the posterior pinned to the singular set,
+evolving with $n$ (the sample-size arm made visible: the level sets fix
+how much room finite-$n$ estimates have to wander; growing $n$ closes
+the room, revealing the set --- and the compounding stated: the set is
+revealed by $n$ exactly where dimension makes it expensive to confront
+[contingent: C4]). Why standard fixes cannot work (reparameterization,
+regularization, healthy-looking diagnostics).
+
+\textbf{Close:} Correct working intuition and a fork: tools (\S4) or
+mathematics (\S3). The blow-up is \S3's payload, not a cliffhanger.
+
+\bigskip
+
+\noindent\textbf{\S3. Singular Learning Theory: The Core Framework}
+($\sim$2.5--3 pages)
+
+\textbf{Goal:} Formalize \S2's picture. Skippable by the tools-only
+practitioner; a from-scratch on-ramp for the theorist without algebraic
+geometry.
+
+\textbf{Main discussion:} Regular geometry formalized (Fisher, Laplace,
+$p/2$). Singular geometry formalized (the optimal set as a variety;
+Fisher degeneracy; the stratified parameter space). The analyticity
+caveat, stated plainly: the theorems require analytic models; the
+microscope FFN uses an analytic activation so every step is carried out
+in full rigor; ReLU is the limit of analytic units and the formal
+extension is open. The blow-up: resolution to normal-crossing form;
+$\lambda$ emerges; the free-energy expansion. The sorting principle:
+integral-based quantities survive the non-smooth change of variables,
+local-differential ones do not --- the formal ground of the geometric
+arm of the lens (a geometry problem is one where the local-differential
+object was never the right object).
+
+\textbf{Close:} Regular geometry is the Laplace picture; singular
+geometry breaks it; the blow-up restores tractability; complexity is
+governed by the geometry of the minimizing set, not the parameter
+count.
+
+\bigskip
+
+\noindent\textbf{\S4. Now What} ($\sim$4--5 pages)
+
+\textbf{Goal:} The delivered value. A maturity-aware field report
+organized around the questions tools answer, each instrument graded on
+concept- and computation-maturity separately --- computability judged at
+the reader's scale.
+
+\textbf{Main discussion:} Practitioner layer. Two questions, two
+criteria as the organizing recast: if the question is prediction,
+CV/WAIC is the right object and is vindicated in singular models
+(Watanabe 2010, gen$+$CV $\to 2\lambda/n$; AIC/DIC provably fail); if
+the question is identifying structure, the free energy is the right
+object, WBIC estimates it, and $\lambda$-based selection is consistent
+where CV is not --- singularity lets CV tolerate larger models (smaller
+$\lambda$), and at small $n$ the selection signal shrinks while CV's
+noise does not [contingent: C3]. Adam recast through underdetermination:
+the guarantee is honest (an $\epsilon$-stationary point under
+smoothness) and the target is not a well-posed destination --- the
+objective specifies a set; the hyperparameters silently complete the
+choice; whether $\epsilon$ and its kin merely navigate the degenerate
+landscape or select the stratum is posed as the open question it is,
+with Adam's $\epsilon$ flagged as a candidate damping instance
+[VERIFY]. The tool-by-question scope table (what it answers / what
+practice asks / the gap), with safe/caution/avoid as its practitioner
+projection. Stop here if you want.
+
+Methods layer. The LLC as the readout of where training landed: the
+SGD-vs-entropy-SGD exhibit (1.9M-parameter FFN on MNIST; 80 repetitions;
+entropy-SGD lands on measurably lower-$\lambda$ strata with remarkably
+low variance; matched fit [VERIFY, C7]) --- optimizer inductive bias
+made visible by the number the loss cannot see; NGD-vs-SGD as the second
+instance. Singular VI as the constructive fix (the \S1 indictment
+becomes the tool). The estimation toolkit (LLC/rLLC, \texttt{devinterp},
+susceptibilities). The Bayesian influence function (the damping constant
+returns as the well-posed localization $\gamma$ --- the twin arc).
+Sampler craft on the singular strata as the live computational frontier.
+The worked example (rLLC on attention heads) in the appendix with a
+one-paragraph pointer, bridging to \S5's interpretability flag.
+
+\textbf{Close:} Which tools to trust for which question, which are
+real-but-early, and which kind of hardness each addresses. The good
+instincts were right --- and every one of them, including the spared
+tool, is right under a scope. The delivered value closes here.
+
+\bigskip
+
+\noindent\textbf{\S5. Conclusions and the Open Horizon} ($\sim$2--2.5
+pages)
+
+\textbf{Goal:} Conclude the delivered paper; pose the open question;
+plant a substantive but explicitly conjectural flag.
+
+\textbf{Main discussion:} Recap (the loss-landscape case is solid).
+Delivered consequences: phase transitions (regularizers select strata; a
+mechanism for part of double descent), quasi-singular phenomena (RLCT
+growth; bearing on scaling). The specification gap as a program:
+hyperparameters silently complete a choice the objective cannot express;
+the LLC makes the choice measurable; an optimizer targeting the free
+energy already demonstrates explicit selection --- so principled, even
+optimal, hyperparameters are a well-posed open question (explicitly
+conjectural; hyperparameter-dependence of final $\lambda$ within a
+single algorithm flagged as an open experiment). The open question:
+could singular geometry unify deep learning practice? The flag:
+mechanistic interpretability developed at half-page depth (non-unique
+circuits, superposition as degeneracy on the singular set, the rLLC
+bridge from \S4's appendix); activation/representation space and
+policy/value space compressed to a credible sentence each. Art to
+science: the \S4 sampler frontier points toward geometry-preserving
+machinery of the kind physics already has for singular configuration
+spaces; the ReLU extension named alongside it as open mathematics.
+
+\textbf{Close:} The loss landscape is governed by singular geometry and
+there are tools to use now. The unification is open --- the case is
+strong enough to pursue. Invitation, not synthesis.
+
+\bigskip
+\noindent Total: $\sim$16--17 pages, plus mathematical appendix (theorem
+statements; the worked rLLC example). Practitioner-first budget: \S1,
+\S2, \S4 protected; \S3 and \S5 compress first.
+
+% ============================================================================
+\section{Key Framing Decisions}
+% ============================================================================
+
+\begin{enumerate}[label=(\alph*), itemsep=6pt]
+
+\item \textbf{The set is the door; the geometry is the subject.} The
+paper's entry move is a substitution --- the minimum is a set, not a
+point --- because it is the one sentence a practitioner absorbs
+instantly (``you did not find the minimum; there is no `the.'\,'').
+But the set alone determines almost nothing the paper delivers:
+$z_1^2$ and $z_1^4$ share a solution set and differ in $\lambda$,
+posterior, and free energy. SLT's quantities are invariants of the
+\emph{pair} --- the set and how the loss vanishes along it --- and the
+vanishing structure is where every consequence lives. The install
+sequence, which is the spine: the set (why it is there) $\to$ the
+shape of the loss around it (normal crossing) $\to$ the standard form
+and the invariants ($\lambda$, singular fluctuation) $\to$ the
+posterior and free energy (how $n$ enters) $\to$ the consequences for
+training, evaluation, selection, and architecture. Masking, the lens,
+scope-narrowing, underdetermination, the instruments --- all
+consequences of taking the geometry seriously, entered through the
+set. \emph{Note: in this document, ``the set'' abbreviates the pair;
+the paper's prose must not inherit the abbreviation where the
+vanishing structure is doing the work.}
+
+\item \textbf{The spine is problem $\to$ mechanism $\to$ resolution
+$\to$ conclusions $+$ horizon.} Unification is a question \S5 raises,
+not a result; delivered value closes at \S4.
+
+\item \textbf{The alarm is level 1; the governance story is level 2.}
+Level 1: tools making parameter-space claims falsely assume the set is a
+point and are wrong at their own stated jobs --- this, and only this, is
+\S1's alarm, and it gives the audit table its third gate (every row
+makes a parameter-space claim). Level 2: procedures whose stated jobs
+survive but whose outcomes the set silently governs --- which point the
+optimizer selects, why it generalizes, which model is chosen at finite
+$n$. Level 2 carries no indictment; its register is explanatory and its
+payoff is \S4's instruments and \S5's program. The bridge, stated once
+and plainly: the optimizer's silent choice has generalization
+consequences ($\lambda$ enters the generalization error), so the
+geometry reaches what the practitioner cares about even when every
+number on the screen looks healthy.
+
+\item \textbf{The harm statement is masking, honestly historied.} The
+repairs were aimed at stability, and stability is what they delivered
+--- the masking is a byproduct of a success, not a failed attempt at
+removing the geometry. Every regularity-restoring repair returns a
+plausible number, so the failure is silent: structurally wrong where
+checkable, distorted elsewhere. This is why the alarm accuses no one.
+``Masked, not removed'' is retired from the opening and survives
+downstream (\S1's close, \S2.5) where it describes what the repairs do,
+not what anyone intended.
+
+\item \textbf{Underdetermination is the optimizer-facing face of the
+object; scope-narrowing is the evaluative-facing face.} Siblings, both
+children of the set. Minimization on a singular landscape is an
+incomplete specification: the loss cannot prefer among loss-equivalent
+points, so the optimizer and hyperparameters complete the choice ---
+Adam is not wrong at its job; its job is underdetermined, and the tuning
+folklore is residual selection done by hand, without a name (Pillar 4's
+deepest face: folklore accumulates in a \emph{specification} gap, not
+just a knowledge gap). For evaluative tools the move is scope-narrowing:
+every number answers a narrower question than practice asks of it. Twin
+calibrations: Adam (the guarantee certifies a stationary point, nothing
+about which) and CV (a generalization estimator, inconsistent for
+selection). When the workhorse and the spared tool submit to the same
+move, the move is the thesis's operational form.
+
+\item \textbf{The lens is three-way and threads the spine.} Geometric
+hardness (wrong object) / sample size (unrevealed set) / computation
+(right object, expensive in high dimension). Any may be operative; they
+co-occur and compound: growing $n$ reveals the set exactly where
+dimension makes it expensive to confront --- the DL-specific enrichment
+the applied-stats sibling never needed [contingent: C4]. Surfaced as
+confusion in \S1, made recognizable in \S2--3, cashed out per tool in
+\S4, placed as frontier in \S5. Expectation-setting and per-tool
+tagging, not a diagnostic procedure; the operational corollary is the
+scope table, and the daily habit is the scope question: which question
+does this number actually answer?
+
+\item \textbf{Seen but not mainstreamed.} The information-geometry
+school (Fukumizu, Amari) identified the structure; Watanabe supplied the
+algebraic-geometric machinery; the observational literature (mode
+connectivity, Hessian spectra, re-basin) mapped the set without
+receiving it as an object. Context, not the goal: it makes the
+counter-evidence the paper's own evidence and keeps the tone generous.
+The lineage stays institutional, not biographical.
+
+\item \textbf{Two questions, two criteria (the hinge, rescoped).} CV is
+vindicated \emph{as a generalization estimator}: asymptotically
+equivalent to WAIC in singular models, gen$+$CV $\to 2\lambda/n$, where
+AIC/DIC provably fail. For the selection question, the free energy is
+the right object and is consistent where CV/WAIC is not; Watanabe states
+both halves and himself deferred the selection comparison. ``CV
+vindicated'' must never slide into ``CV suffices'' --- even the spared
+tool is spared under a scope, which makes the paper's move uniform with
+no exceptions. Bonus the lens predicts: the first place a singular tool
+beats the spared classical one at its own job ($\lambda$-based
+selection), register subject to decision (j).
+
+\item \textbf{The register is assigned by the audit, not by
+enthusiasm.} Plainly provocative only where the tag is geometric
+\emph{and} a better tool is computable at the reader's scale today;
+equally plain and humble where the geometry is settled but computation
+is frontier. Scale is a column in the \S4 audit, and the audit decides
+which register each tool earns. Uniform sharpness overclaims; uniform
+humility loses the edge.
+
+\item \textbf{Three reader types, three paths.} Practitioner: \S1 $\to$
+\S2 $\to$ \S4. Theorist without algebraic geometry: \S1 $\to$ \S2 $\to$
+\S3 $\to$ \S4. Contributor: through \S5. Practitioner-first in center of
+gravity, and the primary reader is defined by product: a supported
+claim, not just a running system.
+
+\item \textbf{Three model roles.} The microscope (tiny FFN with an
+analytic activation, \S1--2: make the crossing visible and the
+mathematics exact); the reckoning (\S2: visualization fails in real
+models --- itself the argument for probes and SLT); the workbench (real
+transformer, real BNN, \S4: demonstrate tools where computation-maturity
+problems are real).
+
+\item \textbf{Four pillars, evidence calibrated per pillar, gated to
+level 1.} Demonstrated $\to$ demonstrable $\to$ argued from the pattern
+$\to$ argued from vetted instances. The ordering is the argument; the
+audit table is the centerpiece; every row makes a parameter-space claim.
+The convergence-lore folklore face moves from \S1 to \S4 (it is level
+2); \S1's folklore faces are the variational-gap misattribution and the
+damping ritual.
+
+\item \textbf{Normal crossing, not wide valley.} \S2's central
+mental-model correction; sets up the blow-up as the obvious untangling.
+
+\item \textbf{Integral-based survives; local-differential fails.} The
+sorting principle that makes the alarm precise, spares cross-validation,
+and grounds the geometric arm of the lens. Stated in \S3, spent in \S4.
+
+\item \textbf{\S4 is a field report in two layers, written from
+audits, not impressions.} Practitioner (which question, which tool) and
+methods (how to compute, failure modes); concept-maturity and
+computation-maturity graded separately; \texttt{devinterp} the methods
+anchor, real-but-early. Two gating tasks: the tools-and-maturity audit
+(per tool: problem / tag / maturities / scale / rough edges / layer) and
+the practice inventory (per practitioner activity: claim made / tool
+used / where the computation lives / the question it answers vs the
+question asked / verdict). \S4 gets the pages it needs; \S3 and \S5
+compress first.
+
+\item \textbf{The singular-first practice is proof of concept.}
+\emph{Deep Learning is Singular, and That's Good} (the invitation);
+Lau et al.'s LLC (the instrument, with the SGD-vs-entropy-SGD exhibit);
+Wei--Lau singular VI; susceptibilities; the Bayesian influence function
+--- cited generously as the toolkit being born. Two emblematic exhibits:
+the BIF (a folklore damping constant reappearing as a principled,
+computable quantity) and the LLC optimizer experiment (equivalent by
+every number you currently look at; different by the number you don't
+--- pending C7).
+
+\item \textbf{Approachable re-exposition is a contribution.} Watanabe
+built the field from the algebra up; this paper starts from phenomena
+the reader has met and pulls down only the algebra each needs. Success:
+the reader engages with SLT and prefers a singular tool where the
+regular one papers over the geometry.
+
+\item \textbf{Minimal prerequisites, maximum geometric intuition.}
+Assumed: SGD/Adam, Hessians, weight decay, normalization, transformers,
+double descent and mode connectivity as phenomena. Not assumed:
+algebraic geometry, differential geometry, SLT, Watanabe.
+
+\item \textbf{Tone: direct, generous, calibrated.} Not ``you have been
+doing it wrong''; not ``singular geometry solves everything.'' The
+opening keeps one clause of generosity (the field has seen the set); the
+paper includes at least one exhibit of the field working an axis
+correctly (statistics acknowledging data batching, \S4) --- generosity
+shown, not claimed. ``An object you were never handed'' must never
+read as ``an object you were too naive to notice.'' The closing note is
+an invitation.
+
+\item \textbf{The analyticity gap is stated, not stepped around.}
+Watanabe's theorems require analytic models; ReLU is not analytic. The
+microscope FFN uses an analytic activation so every step --- crossing,
+blow-up, $\lambda$, validation --- is carried out in full rigor. ReLU is
+presented as the limit of analytic units (softplus, $\beta\to\infty$)
+whose exact positive homogeneity strengthens the symmetry argument; the
+gap is in the machinery, not the phenomenon. Modern transformer
+activations (GELU, SiLU) are analytic, narrowing the gap for the
+reader's own models [contingent: C6]. Stated as a \S3 caveat; the formal
+extension to ReLU flagged as open in \S5. The paper's ethic --- name the
+assumption --- applies to the paper.
+
+\item \textbf{Aims are four: alarm, picture $+$ lens, equip $+$
+report, and the conjectural extension.} The lens and underdetermination
+live inside aim (ii) as the set's two working consequences rather than
+as separate procedural promises. The first three aims parallel the
+applied-stats sibling exactly; aim (iv) is the DL-specific addition,
+gated to the conjectural register by \S5's scope.
+
+\end{enumerate}
+
+% ============================================================================
+\section{Load-Bearing Contingencies}
+% ============================================================================
+
+\noindent\emph{Framing in this document that depends on an open or
+partial item in the needs document. Each entry states the claim, the
+needs item it rests on, the decided fallback if verification fails, and
+--- where verification purchases something --- the upside action. No
+other framing decision is contingent; if one of these fails, only its
+listed downstream edits are infected.}
+
+\begin{enumerate}[label=\textbf{C\arabic*.}, leftmargin=*, itemsep=6pt]
+
+\item \textbf{The conclusion-flip exhibit.} The masking thesis asserts
+wrong \emph{conclusions}, not just wrong numbers; silence is also what
+correctness predicts. Needed: one validated case where a regular tool
+and its singular counterpart disagree on a conclusion and the singular
+answer is verifiably right. Three candidates, cheapest first: (a) the
+small-$n$ mixture selection experiment (CV selects the larger model;
+free energy selects the true one) --- doubles as the cross-paper bridge
+to the applied-stats binomial mixture; (b) the LLC optimizer exhibit if
+matched fit holds (C7); (c) BIF-vs-damped-IF reordering of influential
+examples, validated by retraining. \emph{Fallback:} the alarm rests on
+the structural-wrongness exhibits (Wei--Lau VI, degenerate-Hessian
+Laplace); masking is stated as demonstrated distortion plus
+unattributable success; the conclusion-flip is named as the open
+empirical question (moves to \S5). \emph{Touches:} aim (i)'s
+``structurally wrong where checkable'' (softens to ``can be
+structurally wrong''); \S2 walk-away item 3 survives unchanged (masking
+restated as demonstrated distortion); \S4-overview \S1's close. [Needs
+doc \S4.]
+
+\item \textbf{Wei--Lau precise statements and scale.} Pillar 1's anchor
+and \S4.3's provocative register assume the failure/fix statements pin
+down as remembered and that singular VI is computable at a scale
+relevant to the reader. \emph{Fallback:} if the scale check fails, the
+tag becomes geometry-settled / computation-frontier and the register
+drops to humble per decision (i); Pillar 1 leans on the Laplace exhibit
+as anchor. \emph{Touches:} \S4-overview \S1 and \S4; framing decision
+(p). [Needs doc \S1, \S4.]
+
+\item \textbf{The small-$n$ selection statement.} The two-questions
+hinge is verified in its qualitative form (CV/WAIC unbiased for
+generalization, not consistent; free energy consistent, not unbiased;
+the WBIC discussion's weaker-consistency remark; Watanabe's own deferral
+of the selection comparison). What remains open is the quantitative
+small-$n$ claim (selection signal shrinking against CV noise): pin it in
+Watanabe's 2021 mixture comparison or Yamazaki--Kaji 2013, or
+demonstrate it with the mixture experiment (C1a). \emph{Fallback:} \S4.1
+states the consistency asymmetry without the finite-$n$ rate; the
+mixture experiment is reported as illustration, not theorem.
+\emph{Touches:} \S4-overview \S4's practitioner layer only; walk-away
+item 6 survives unchanged (it states the consistency asymmetry, not the
+rate). [Needs doc \S4.]
+
+\item \textbf{The $n$--dimension compounding claim.} The compounding
+sentence assumes the claim survives the finite-sample /
+dimension-dependence literature check --- which also asks whether the
+compounding is genuinely unspelled-out (a contribution to name) or
+already stated (cite and lean). \emph{Fallback:} shown-not-interpreted
+in \S2 (the figure stands on its own), strong form posed as open in
+\S5. \emph{Touches:} \S4-overview \S2.4; framing decision (f)'s
+compounding sentence. \emph{If verified:} restore the compounding to
+NOT bullet 1's contribution list and to walk-away item 5's lens
+sentence. [Needs doc \S2.]
+
+\item \textbf{The one-reflex reading of Pillar 3.} The claim that
+damping, Gaussian families, and sharpness penalties are one move at
+different sites must hold across the audit table's shipped-repair column
+--- now easier, since the table is gated to parameter-space claims.
+\emph{Fallback:} Pillar 3 weakens from ``the same move'' to ``a family
+of regularity-restoring moves''; the escalation ordering of \S1 survives
+intact. \emph{Touches:} \S4-overview \S1 only. [Needs doc \S1.]
+
+\item \textbf{Transformer activations are analytic.} Decision (t)'s
+``narrowing the gap'' sentence assumes GELU/SiLU dominance in the
+workbench class and analyticity of those units. \emph{Fallback:} the
+sentence is cut; the analyticity caveat stands on the microscope's rigor
+and the softplus-limit framing alone. \emph{Touches:} framing decision
+(t) only. [Needs doc \S3.]
+
+\item \textbf{Matched fit in the LLC optimizer exhibit.} The emblematic
+reading (``equivalent by every number you currently look at; different
+by the number you don't'') requires that the SGD and entropy-SGD
+endpoints have comparable training and test performance in Lau et al.'s
+experiment --- the $\lambda$ separation and its low variance are
+verified; the matched-fit half is not yet. \emph{Fallback:} the exhibit
+is reported as optimizer inductive bias made measurable (verified as
+stated by the authors), without the equivalence framing; the emblematic
+slot falls to the BIF alone, and C1(b) is struck as a conclusion-flip
+candidate. \emph{Touches:} \S4-overview \S4's methods layer; framing
+decision (p); walk-away item 6 survives unchanged (it states the LLC
+as readout, not the equivalence framing). [Needs doc \S4, new item.]
+
+\end{enumerate}
+
+\end{document}
